@@ -4,6 +4,9 @@ import { useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 import roverUrl from '../assets/lunar_Rover.glb?url';
 import { PLANK_LENGTH, PLANK_WIDTH } from './Plank';
+import { LM_HALF_EXTENT, LM_POSITION } from './LunarModule';
+
+const ROVER_RADIUS = 0.8;
 
 const TARGET_ROVER_SIZE = 2.8;
 const ACCELERATION = 14;
@@ -130,6 +133,19 @@ export function Rover() {
     const halfL = PLANK_LENGTH / 2 - 1.4;
     rover.position.x = THREE.MathUtils.clamp(rover.position.x, -halfW, halfW);
     rover.position.z = THREE.MathUtils.clamp(rover.position.z, -halfL, halfL);
+
+    // Don't drive through the Lunar Module: push the rover out of its footprint
+    const lmHalf = LM_HALF_EXTENT + ROVER_RADIUS;
+    const dx = rover.position.x - LM_POSITION[0];
+    const dz = rover.position.z - LM_POSITION[2];
+    if (Math.abs(dx) < lmHalf && Math.abs(dz) < lmHalf) {
+      if (lmHalf - Math.abs(dx) < lmHalf - Math.abs(dz)) {
+        rover.position.x = LM_POSITION[0] + Math.sign(dx || 1) * lmHalf;
+      } else {
+        rover.position.z = LM_POSITION[2] + Math.sign(dz || 1) * lmHalf;
+      }
+      speed.current *= 0.5;
+    }
 
     // Smooth third-person follow camera
     const rotatedOffset = cameraOffset.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), heading.current);

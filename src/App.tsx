@@ -3,6 +3,7 @@ import { Canvas } from '@react-three/fiber';
 import { Stars } from '@react-three/drei';
 import { Plank } from './components/Plank';
 import { Rover } from './components/Rover';
+import { LunarModule } from './components/LunarModule';
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
         <Plank />
 
         <Suspense fallback={null}>
+          <LunarModule />
           <Rover />
         </Suspense>
       </Canvas>

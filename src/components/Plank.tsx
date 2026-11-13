@@ -1,4 +1,4 @@
-export const PLANK_WIDTH = 20;
+export const PLANK_WIDTH = 32;
 export const PLANK_LENGTH = 36;
 export const PLANK_THICKNESS = 0.6;
 
