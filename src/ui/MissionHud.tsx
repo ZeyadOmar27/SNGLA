@@ -1,7 +1,7 @@
 import { Check, Compass, Flag, Fuel, Gauge, Navigation, RotateCcw, Rocket } from 'lucide-react';
 import { LUNAR_ROCK_SPECS, type LunarRockKind } from '../utils/lunarRocks';
-import type { DriveTelemetry } from './Rover';
-import type { LandingTelemetry } from './Level1Landing';
+import type { DriveTelemetry, LrvDriveState, LrvSteeringMode } from '../entities/Rover';
+import type { LandingTelemetry } from '../levels/Level1Landing';
 
 export type ActiveLevel = 'level1' | 'level2';
 
@@ -16,15 +16,30 @@ export interface MissionHudProps {
   activeLevel: ActiveLevel;
   landingTelemetry: LandingTelemetry;
   driveTelemetry: DriveTelemetry;
+  steeringMode: LrvSteeringMode;
   collectedSet: ReadonlySet<LunarRockKind>;
   cleanGrabs: number;
   fumbles: number;
   toast: ToastNotice | null;
   tongsCursorRef: React.RefObject<HTMLDivElement | null>;
   onAttemptGrab: () => void;
+  onSelectSteeringMode: (mode: LrvSteeringMode) => void;
   onSelectLevel: (level: ActiveLevel) => void;
   onResetCurrentLevel: () => void;
 }
+
+const DRIVE_STATE_TONES: Record<LrvDriveState, { label: string; className: string }> = {
+  FWD: { label: 'FWD', className: 'bg-emerald-500/20 text-emerald-300 border-emerald-400/35' },
+  BRAKE: { label: 'BRAKE', className: 'bg-amber-500/25 text-amber-300 border-amber-400/45' },
+  REV: { label: 'REV LOCK', className: 'bg-rose-500/25 text-rose-300 border-rose-400/45' },
+  NEUTRAL: { label: 'HOLD', className: 'bg-white/10 text-slate-300 border-white/15' },
+};
+
+const STEER_MODE_OPTIONS: readonly { mode: LrvSteeringMode; label: string }[] = [
+  { mode: 'dual', label: 'Dual 4W' },
+  { mode: 'front', label: 'Front' },
+  { mode: 'rear', label: 'Rear' },
+];
 
 function getSlopeTone(slopeDeg: number): { label: string; colorClass: string; barClass: string } {
   if (slopeDeg <= 8) {
@@ -52,16 +67,23 @@ export function MissionHud({
   activeLevel,
   landingTelemetry,
   driveTelemetry,
+  steeringMode,
   collectedSet,
   cleanGrabs,
   fumbles,
   toast,
   tongsCursorRef,
   onAttemptGrab,
+  onSelectSteeringMode,
   onSelectLevel,
   onResetCurrentLevel,
 }: MissionHudProps) {
   const slopeTone = getSlopeTone(landingTelemetry.slopeDeg);
+  const driveTone = DRIVE_STATE_TONES[driveTelemetry.driveState];
+  const frontWheelHudDeg =
+    steeringMode === 'rear' ? 0 : -driveTelemetry.tBarSteer * 28;
+  const rearWheelHudDeg =
+    steeringMode === 'front' ? 0 : driveTelemetry.tBarSteer * 28;
   const nearbySpec = driveTelemetry.nearbyRockId
     ? LUNAR_ROCK_SPECS.find((s) => s.id === driveTelemetry.nearbyRockId) ?? null
     : null;
@@ -180,14 +202,35 @@ export function MissionHud({
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-4 rounded-xl border border-white/10 bg-slate-950/80 px-4 py-3 backdrop-blur-md">
                 <div>
-                  <div className="flex items-center gap-1 text-[10px] tracking-wider text-slate-400 uppercase">
+                  <div className="flex items-center gap-1.5 text-[10px] tracking-wider text-slate-400 uppercase">
                     <Gauge className="h-3 w-3" />
                     <span>Speed</span>
+                    <span
+                      className={`rounded border px-1 py-px font-mono text-[9px] font-bold ${driveTone.className}`}
+                    >
+                      {driveTone.label}
+                    </span>
                   </div>
                   <div className="font-mono text-base font-semibold text-white">
                     {driveTelemetry.speed.toFixed(1)}{' '}
                     <span className="text-xs text-slate-400">m/s</span>
                   </div>
+                </div>
+
+                {/* Live Central T-Bar Stick Position Indicator */}
+                <div
+                  title="Apollo LRV T-Bar Hand Controller (W Push / S Brake-Rev / A-D Steer)"
+                  className="relative h-8 w-8 shrink-0 rounded-lg border border-white/15 bg-slate-900/90"
+                >
+                  <div className="absolute inset-x-1 top-1/2 h-px bg-white/10" />
+                  <div className="absolute inset-y-1 left-1/2 w-px bg-white/10" />
+                  <div
+                    className="absolute h-2.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-sm bg-amber-300 shadow-[0_0_6px_rgba(252,211,77,0.65)] transition-all duration-75"
+                    style={{
+                      left: `${50 - driveTelemetry.tBarSteer * 28}%`,
+                      top: `${50 - driveTelemetry.tBarPitch * 28}%`,
+                    }}
+                  />
                 </div>
 
                 <div className="h-8 w-px bg-white/10" />
@@ -221,6 +264,68 @@ export function MissionHud({
                 <RotateCcw className="h-3.5 w-3.5" />
                 <span>Reset</span>
               </button>
+            </div>
+
+            {/* Apollo LRV Dual-Ackermann Steering Mode Selector + Mini 4-Wheel Indicator */}
+            <div className="pointer-events-auto flex w-72 items-center justify-between gap-2.5 rounded-xl border border-white/10 bg-slate-950/80 px-3 py-2 backdrop-blur-md">
+              <div className="flex-1">
+                <div className="flex items-center justify-between text-[10px] font-semibold tracking-wider text-sky-300 uppercase">
+                  <span>LRV Steering</span>
+                  <kbd className="rounded bg-white/10 px-1 py-0.5 font-mono text-[9px] text-slate-200">
+                    Q
+                  </kbd>
+                </div>
+                <div className="mt-1.5 grid grid-cols-3 gap-1 text-[11px]">
+                  {STEER_MODE_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.mode}
+                      type="button"
+                      onClick={(e) => {
+                        e.currentTarget.blur();
+                        onSelectSteeringMode(opt.mode);
+                      }}
+                      className={`rounded-md px-1.5 py-1 font-semibold transition ${
+                        steeringMode === opt.mode
+                          ? 'bg-sky-500 text-slate-950 shadow-sm'
+                          : 'bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Top-down 4-wheel counter-steering chassis diagram */}
+              <div className="relative h-11 w-9 shrink-0 rounded-md border border-white/10 bg-slate-900/80">
+                <div className="absolute inset-x-3 inset-y-2 rounded-sm border border-white/15 bg-white/5" />
+                {/* Front Left & Front Right */}
+                <span
+                  className={`absolute top-1.5 left-1 h-2.5 w-1 rounded-xs transition-transform duration-75 ${
+                    steeringMode === 'rear' ? 'bg-slate-500' : 'bg-sky-300'
+                  }`}
+                  style={{ transform: `rotate(${frontWheelHudDeg}deg)` }}
+                />
+                <span
+                  className={`absolute top-1.5 right-1 h-2.5 w-1 rounded-xs transition-transform duration-75 ${
+                    steeringMode === 'rear' ? 'bg-slate-500' : 'bg-sky-300'
+                  }`}
+                  style={{ transform: `rotate(${frontWheelHudDeg}deg)` }}
+                />
+                {/* Rear Left & Rear Right */}
+                <span
+                  className={`absolute bottom-1.5 left-1 h-2.5 w-1 rounded-xs transition-transform duration-75 ${
+                    steeringMode === 'front' ? 'bg-slate-500' : 'bg-amber-300'
+                  }`}
+                  style={{ transform: `rotate(${rearWheelHudDeg}deg)` }}
+                />
+                <span
+                  className={`absolute right-1 bottom-1.5 h-2.5 w-1 rounded-xs transition-transform duration-75 ${
+                    steeringMode === 'front' ? 'bg-slate-500' : 'bg-amber-300'
+                  }`}
+                  style={{ transform: `rotate(${rearWheelHudDeg}deg)` }}
+                />
+              </div>
             </div>
 
             {/* Numbered Apollo 15 Sample Bag Manifest */}
@@ -451,7 +556,12 @@ export function MissionHud({
             <>
               <span>
                 <kbd className="rounded bg-white/15 px-1.5 py-0.5 font-mono text-white">W A S D</kbd>{' '}
-                / Arrows Drive
+                / Arrows T-Bar Drive
+              </span>
+              <span>•</span>
+              <span>
+                <kbd className="rounded bg-white/15 px-1.5 py-0.5 font-mono text-white">Q</kbd>{' '}
+                Steer Mode
               </span>
               <span>•</span>
               <span>

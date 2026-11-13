@@ -72,3 +72,14 @@ export function playDustFumbleSfx() {
   }
 }
 
+/** Crisp mechanical cockpit toggle click for LRV steering mode & reverse latch switches. */
+export function playSwitchClickSfx() {
+  const ctx = getCtx();
+  if (!ctx) return;
+  try {
+    playTone(ctx, 1120, 540, 0.045, 0, 'square', 0.045);
+  } catch {
+    // Ignore audio context restrictions
+  }
+}
+

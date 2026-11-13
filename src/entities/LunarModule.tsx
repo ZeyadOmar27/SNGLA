@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useThree } from '@react-three/fiber';
 import { useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
-import lmUrl from '../assets/apollo_lunar_module.glb?url';
+import lmUrl from '@assets/Apollo_ Lunar_ Module.glb?url';
 import { prepareAndSoftenModel } from '../utils/modelHelpers';
 import { getFoilBumpTexture, getMicroGrainTexture } from '../utils/proceduralTextures';
 

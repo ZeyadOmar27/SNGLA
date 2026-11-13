@@ -1,16 +1,16 @@
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { Environment, Lightformer } from '@react-three/drei';
-import { Level1Landing, type LandingTelemetry } from './components/Level1Landing';
-import { Level2Rover } from './components/Level2Rover';
-import { MissionHud, type ActiveLevel, type ToastNotice } from './components/MissionHud';
-import type { DriveTelemetry } from './components/Rover';
+import { Level1Landing, type LandingTelemetry } from './levels/Level1Landing';
+import { Level2Rover } from './levels/Level2Rover';
+import { MissionHud, type ActiveLevel, type ToastNotice } from './ui/MissionHud';
+import type { DriveTelemetry, LrvSteeringMode } from './entities/Rover';
 import {
   FUNNY_FUMBLE_QUOTES,
   LUNAR_ROCK_SPECS,
   type LunarRockKind,
 } from './utils/lunarRocks';
-import { playCleanGrabSfx, playDustFumbleSfx } from './utils/lunarSfx';
+import { playCleanGrabSfx, playDustFumbleSfx, playSwitchClickSfx } from './utils/lunarSfx';
 
 const INITIAL_LANDING_TELEMETRY: LandingTelemetry = {
   altitude: 32,
@@ -30,6 +30,10 @@ const INITIAL_DRIVE_TELEMETRY: DriveTelemetry = {
   targetBearingDeg: 0,
   reachedSite: false,
   nearbyRockId: null,
+  steeringMode: 'dual',
+  driveState: 'NEUTRAL',
+  tBarPitch: 0,
+  tBarSteer: 0,
 };
 
 const CLEAN_ZONE_MIN = 0.3;
@@ -39,6 +43,7 @@ export function App() {
   const [activeLevel, setActiveLevel] = useState<ActiveLevel>('level1');
   const [level1ResetNonce, setLevel1ResetNonce] = useState(0);
   const [level2ResetNonce, setLevel2ResetNonce] = useState(0);
+  const [steeringMode, setSteeringMode] = useState<LrvSteeringMode>('dual');
 
   const [landingTelemetry, setLandingTelemetry] = useState<LandingTelemetry>(
     INITIAL_LANDING_TELEMETRY,
@@ -68,6 +73,15 @@ export function App() {
     meterValueRef.current = 0.5;
   }, []);
 
+  const handleCycleSteeringMode = useCallback(() => {
+    setSteeringMode((prev) => (prev === 'dual' ? 'front' : prev === 'front' ? 'rear' : 'dual'));
+  }, []);
+
+  const handleSelectSteeringMode = useCallback((mode: LrvSteeringMode) => {
+    playSwitchClickSfx();
+    setSteeringMode(mode);
+  }, []);
+
   const handleSelectLevel = useCallback(
     (nextLevel: ActiveLevel) => {
       setActiveLevel(nextLevel);
@@ -76,6 +90,7 @@ export function App() {
         setLevel1ResetNonce((n) => n + 1);
       } else {
         resetRockProgress();
+        setSteeringMode('dual');
         setDriveTelemetry(INITIAL_DRIVE_TELEMETRY);
         setLevel2ResetNonce((n) => n + 1);
       }
@@ -89,6 +104,7 @@ export function App() {
       setLevel1ResetNonce((n) => n + 1);
     } else {
       resetRockProgress();
+      setSteeringMode('dual');
       setDriveTelemetry(INITIAL_DRIVE_TELEMETRY);
       setLevel2ResetNonce((n) => n + 1);
     }
@@ -247,6 +263,8 @@ export function App() {
               nearbyRockId={driveTelemetry.nearbyRockId}
               fumbleEvent={fumbleEvent}
               grabSwingNonce={grabSwingNonce}
+              steeringMode={steeringMode}
+              onCycleSteeringMode={handleCycleSteeringMode}
               onDriveTelemetry={setDriveTelemetry}
             />
           )}
@@ -257,12 +275,14 @@ export function App() {
         activeLevel={activeLevel}
         landingTelemetry={landingTelemetry}
         driveTelemetry={driveTelemetry}
+        steeringMode={steeringMode}
         collectedSet={collectedSet}
         cleanGrabs={cleanGrabs}
         fumbles={fumbles}
         toast={toast}
         tongsCursorRef={tongsCursorRef}
         onAttemptGrab={handleAttemptGrab}
+        onSelectSteeringMode={handleSelectSteeringMode}
         onSelectLevel={handleSelectLevel}
         onResetCurrentLevel={handleResetCurrentLevel}
       />

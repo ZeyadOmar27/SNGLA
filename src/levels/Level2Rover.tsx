@@ -2,14 +2,14 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { useThree } from '@react-three/fiber';
 import { useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
-import lmUrl from '../assets/apollo_lunar_module.glb?url';
+import lmUrl from '@assets/Apollo_ Lunar_ Module.glb?url';
 import { prepareAndSoftenModel } from '../utils/modelHelpers';
 import { type TerrainSampler } from '../utils/hadleyTerrain';
 import type { LunarRockKind } from '../utils/lunarRocks';
-import { HadleyTerrain } from './HadleyTerrain';
-import { LunarRocks, buildWorldRockSites } from './LunarRocks';
-import { LM_FOOTPRINT, tuneApolloModuleMaterial } from './LunarModule';
-import { Rover, type DriveTelemetry } from './Rover';
+import { HadleyTerrain } from '../entities/HadleyTerrain';
+import { LunarRocks, buildWorldRockSites } from '../entities/LunarRocks';
+import { LM_FOOTPRINT, tuneApolloModuleMaterial } from '../entities/LunarModule';
+import { Rover, type DriveTelemetry, type LrvSteeringMode } from '../entities/Rover';
 
 interface Level2RoverProps {
   resetNonce: number;
@@ -17,6 +17,8 @@ interface Level2RoverProps {
   nearbyRockId: LunarRockKind | null;
   fumbleEvent: { rockId: LunarRockKind; nonce: number } | null;
   grabSwingNonce: number;
+  steeringMode: LrvSteeringMode;
+  onCycleSteeringMode: () => void;
   onDriveTelemetry: (telemetry: DriveTelemetry) => void;
 }
 
@@ -30,6 +32,8 @@ export function Level2Rover({
   nearbyRockId,
   fumbleEvent,
   grabSwingNonce,
+  steeringMode,
+  onCycleSteeringMode,
   onDriveTelemetry,
 }: Level2RoverProps) {
   const { scene } = useGLTF(lmUrl);
@@ -89,6 +93,8 @@ export function Level2Rover({
             rockSites={layout.rockSites}
             collectedSet={collectedSet}
             grabSwingNonce={grabSwingNonce}
+            steeringMode={steeringMode}
+            onCycleSteeringMode={onCycleSteeringMode}
             roverPosRefOut={roverPosRef}
             resetNonce={resetNonce}
             onDriveUpdate={onDriveTelemetry}

@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { Stars, useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
-import terrainUrl from '../assets/apollo_15_landing_site.glb?url';
+import terrainUrl from '@assets/Apollo_15_-_Landing_Site.glb?url';
 import { getLunarPlankTextures } from '../utils/proceduralTextures';
 import {
   buildCleanHadleyGeometry,

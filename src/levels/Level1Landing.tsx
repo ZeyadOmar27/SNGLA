@@ -2,11 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
-import lmUrl from '../assets/apollo_lunar_module.glb?url';
+import lmUrl from '@assets/Apollo_ Lunar_ Module.glb?url';
 import { prepareAndSoftenModel } from '../utils/modelHelpers';
 import { HADLEY_PLAY_LIMIT, type TerrainSampler } from '../utils/hadleyTerrain';
-import { HadleyTerrain } from './HadleyTerrain';
-import { LM_FOOTPRINT, tuneApolloModuleMaterial } from './LunarModule';
+import { HadleyTerrain } from '../entities/HadleyTerrain';
+import { LM_FOOTPRINT, tuneApolloModuleMaterial } from '../entities/LunarModule';
 
 export interface LandingTelemetry {
   altitude: number;
