@@ -90,9 +90,15 @@
     #hero h1{font-size:clamp(44px,15vw,96px)}
   }
 
+  /* ---- Logo image (replaces the calligraphy title) ---- */
+  #hero h1.logo-wrap{margin:0;font-size:0;line-height:0;filter:none;text-shadow:none}
+  #hero .site-logo{display:block;width:clamp(240px,34vw,560px);height:auto;margin:0 auto;animation:rise 1s cubic-bezier(.2,.8,.2,1) both .3s}
+  @media (prefers-reduced-motion: reduce){#hero .site-logo{animation:none}}
+
   /* ---- Polish layer ---- */
   :root{--acc:#b9c8ff}
   html[data-body="mars"]{--acc:#ff8a4c}
+  html[data-body="earth"]{--acc:#6fc3ff}
   #hero h1{text-shadow:0 0 40px color-mix(in srgb,var(--acc) 38%,transparent)}
   #hero{transition:opacity .8s ease,transform .8s ease}
   html[data-sel="on"] #hero{opacity:.12;transform:translate(-2vw,-50%)}
@@ -193,13 +199,14 @@
   @media (prefers-reduced-motion: reduce){#hero .ln{animation:none!important;clip-path:none;text-shadow:0 0 40px color-mix(in srgb,var(--acc) 38%,transparent)}}
   #hero .l2{margin-left:.9em;font-size:.66em}
   #hero .l3{margin-left:.25em}
-  #hero .toggle-container{--tw:132px;position:relative;bottom:auto;left:auto;display:flex;width:fit-content;margin:clamp(22px,4vh,44px) auto 0;padding:6px;pointer-events:auto;animation:rise 1s cubic-bezier(.2,.8,.2,1) both 3.6s}
+  #hero .toggle-container{--tw:104px;position:relative;bottom:auto;left:auto;display:flex;width:fit-content;margin:clamp(22px,4vh,44px) auto 0;padding:6px;pointer-events:auto;animation:rise 1s cubic-bezier(.2,.8,.2,1) both 3.6s}
   #hero .toggle-container::before{top:6px;left:6px;width:var(--tw);height:calc(100% - 12px)}
-  html[data-body="mars"] #hero .toggle-container::before{transform:translateX(var(--tw))}
+  html[data-body="moon"] #hero .toggle-container::before{transform:translateX(var(--tw))}
+  html[data-body="mars"] #hero .toggle-container::before{transform:translateX(calc(var(--tw) * 2))}
   #hero .toggle-container .toggle-btn,#hero .toggle-container .toggle-btn.active{width:var(--tw);padding:14px 0;font-size:14px;letter-spacing:.2em}
   @media (max-width:900px){
     #hero h1{font-size:clamp(44px,15vw,96px)}
-    #hero .toggle-container{--tw:112px}
+    #hero .toggle-container{--tw:92px}
     #hero .toggle-container .toggle-btn,#hero .toggle-container .toggle-btn.active{padding:12px 0;font-size:12.5px}
   }
   @media (prefers-reduced-motion: reduce){#hero .toggle-container,#hero .pick{animation:none}}
@@ -207,8 +214,6 @@
   /* Landing: "Pick a site" is plain text under the toggle, not a window */
   html:not([data-sel="on"]) #panel{display:none}
   #hero .pick{max-width:320px;margin:18px auto 0;text-align:center;font-family:Inter,system-ui,sans-serif;animation:rise 1s cubic-bezier(.2,.8,.2,1) both 3.9s}
-  #hero .pick b{display:block;font-size:12px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:var(--acc)}
-  #hero .pick span{display:block;margin-top:6px;font-size:12.5px;line-height:1.6;letter-spacing:.02em;color:rgba(255,255,255,.55)}
 
   /* Clickable site names row under "Pick a site" */
   #hero .site-links {
@@ -250,31 +255,211 @@
   #coord-dot{position:fixed;left:0;top:0;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;z-index:24;pointer-events:none;opacity:0;border-radius:50%;border:1.5px solid var(--acc);box-shadow:0 0 8px var(--acc),inset 0 0 4px rgba(0,0,0,.6);transition:opacity .15s ease;will-change:transform}
   #coord-toast{position:fixed;top:22px;left:50%;transform:translate(-50%,-8px);z-index:30;pointer-events:none;opacity:0;padding:7px 16px;border-radius:999px;background:rgba(10,14,26,.88);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid color-mix(in srgb,var(--acc) 50%,transparent);font:600 11px/1 Inter,system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#fff;transition:opacity .25s ease,transform .25s ease}
   #coord-toast.show{opacity:1;transform:translate(-50%,0)}
-  /* ---- Mission card (landing): one mission per world ---- */
-  #hero .pick{max-width:none;width:min(360px,86vw);margin:22px auto 0}
-  #hero .pick b,#hero .pick span.legacy{display:none}
-  .mission{position:relative;display:block;width:100%;text-align:left;white-space:normal;cursor:pointer;pointer-events:auto;overflow:hidden;
-    padding:18px 20px 16px;border:1px solid transparent;border-radius:18px;color:var(--fg);font-family:Inter,system-ui,sans-serif;
-    background:linear-gradient(rgba(10,14,26,.78),rgba(10,14,26,.78)) padding-box,linear-gradient(140deg,color-mix(in srgb,var(--acc) 75%,transparent),rgba(255,255,255,.06) 40%,rgba(255,255,255,.03)) border-box;
-    -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 14px 40px rgba(0,0,0,.55),0 0 36px color-mix(in srgb,var(--acc) 14%,transparent);
-    transition:transform .35s cubic-bezier(.2,.8,.2,1),box-shadow .35s,opacity .3s}
-  .mission::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(120% 90% at 100% 0%,color-mix(in srgb,var(--acc) 20%,transparent),transparent 60%)}
-  .mission:hover{transform:translateY(-3px);box-shadow:0 18px 48px rgba(0,0,0,.6),0 0 52px color-mix(in srgb,var(--acc) 28%,transparent)}
-  .mission:active{transform:translateY(-1px)}
-  .mission>span{position:relative;display:block}
-  .m-eyebrow{display:flex!important;align-items:center;gap:8px;font-size:10.5px;font-weight:600;letter-spacing:.24em;text-transform:uppercase;color:var(--acc)}
-  .m-eyebrow::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--acc);box-shadow:0 0 0 0 var(--acc);animation:ping 2s ease-out infinite}
-  @keyframes ping{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--acc) 70%,transparent)}100%{box-shadow:0 0 0 10px transparent}}
-  .m-name{margin-top:10px;font:italic 600 clamp(38px,3.8vw,52px)/1.02 "Cormorant Garamond",Georgia,serif;color:#fff}
-  .m-tag{margin-top:6px;font-size:13px;line-height:1.55;color:rgba(255,255,255,.62)}
-  .m-stats{display:flex!important;gap:8px;flex-wrap:wrap;margin-top:14px}
-  .m-stats em{font-style:normal;padding:5px 10px;border-radius:999px;font-size:11px;letter-spacing:.04em;color:rgba(255,255,255,.8);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1)}
-  .m-stats em b{color:var(--acc);font-weight:600;margin-right:5px;letter-spacing:.12em;font-size:9.5px;text-transform:uppercase}
-  .m-cta{display:flex!important;align-items:center;justify-content:space-between;margin-top:16px;padding-top:13px;border-top:1px solid rgba(255,255,255,.1);font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#fff}
-  .m-cta i{font-style:normal;font-size:16px;color:var(--acc);transition:transform .3s}
-  .mission:hover .m-cta i{transform:translateX(5px)}
-  .mission.swap>span{animation:rise .6s cubic-bezier(.2,.8,.2,1) both}
-  @media (prefers-reduced-motion: reduce){.m-eyebrow::before{animation:none}.mission.swap>span{animation:none}}
+  /* ---- Game menu (landing) ---- */
+  #hero .pick{max-width:none;width:min(320px,86vw);margin:24px auto 0}
+  .menu{display:flex;flex-direction:column;gap:8px;pointer-events:auto;font-family:Inter,system-ui,sans-serif}
+  .mi{position:relative;display:flex;align-items:center;gap:12px;width:100%;text-align:left;white-space:normal;padding:13px 16px 13px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.1);color:#fff;cursor:pointer;
+    background:linear-gradient(90deg,rgba(10,14,26,.78),rgba(10,14,26,.5));-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+    transition:transform .25s cubic-bezier(.2,.8,.2,1),border-color .25s,box-shadow .25s,background .25s}
+  .mi::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:0 3px 3px 0;background:var(--acc);box-shadow:0 0 12px var(--acc);transform:scaleY(0);transition:transform .25s}
+  .mi-c{font-style:normal;width:14px;color:var(--acc);opacity:0;transform:translateX(-6px);transition:opacity .25s,transform .25s}
+  .mi-t{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
+  .mi-t b{font:400 13px/1.2 Michroma,Inter,sans-serif;letter-spacing:.22em;text-transform:uppercase}
+  .mi-t small{font-size:11.5px;letter-spacing:.03em;color:rgba(255,255,255,.5);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .mi kbd,.menu-keys kbd{font:600 10px Inter,sans-serif;min-width:20px;padding:2px 6px;text-align:center;border-radius:5px;color:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.05)}
+  .mi:hover:not(:disabled),.mi:focus-visible{transform:translateX(8px);border-color:color-mix(in srgb,var(--acc) 70%,transparent);outline:none;
+    background:linear-gradient(90deg,color-mix(in srgb,var(--acc) 22%,rgba(10,14,26,.8)),rgba(10,14,26,.55));box-shadow:0 10px 30px rgba(0,0,0,.5),0 0 28px color-mix(in srgb,var(--acc) 22%,transparent)}
+  .mi:hover:not(:disabled)::before,.mi:focus-visible::before{transform:scaleY(1)}
+  .mi:hover:not(:disabled) .mi-c,.mi:focus-visible .mi-c{opacity:1;transform:none}
+  .mi:active:not(:disabled){transform:translateX(8px) scale(.985)}
+  .mi-primary{border-color:color-mix(in srgb,var(--acc) 55%,transparent);background:linear-gradient(90deg,color-mix(in srgb,var(--acc) 26%,rgba(10,14,26,.85)),rgba(10,14,26,.55));box-shadow:0 0 30px color-mix(in srgb,var(--acc) 18%,transparent)}
+  .mi-primary .mi-c{opacity:1;transform:none}
+  .mi:disabled{opacity:.42;cursor:not-allowed}
+  .menu-keys{display:flex;justify-content:center;gap:16px;margin-top:6px;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.38)}
+  .menu-keys span{display:inline-flex;align-items:center;gap:4px}
+  #hero .pick .mi{animation:rise .7s cubic-bezier(.2,.8,.2,1) backwards}
+  #hero .pick .mi:nth-child(1){animation-delay:4.0s}#hero .pick .mi:nth-child(2){animation-delay:4.1s}#hero .pick .mi:nth-child(3){animation-delay:4.2s}#hero .pick .mi:nth-child(4){animation-delay:4.3s}
+  @media (max-width:900px){.mi{padding:11px 14px 11px 12px}.menu-keys{display:none}}
+
+  /* ---- Modal + quit screen ---- */
+  .modal,.bye{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.62);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);animation:fadein .3s ease both}
+  .modal[hidden],.bye[hidden],[hidden]{display:none!important}
+  @keyframes fadein{from{opacity:0}to{opacity:1}}
+  .modal-card{width:min(420px,100%);padding:26px 26px 22px;border-radius:20px;border:1px solid transparent;font-family:Inter,system-ui,sans-serif;color:#fff;
+    background:linear-gradient(rgba(10,14,26,.94),rgba(10,14,26,.94)) padding-box,linear-gradient(140deg,color-mix(in srgb,var(--acc) 70%,transparent),rgba(255,255,255,.07) 40%,rgba(255,255,255,.03)) border-box;
+    box-shadow:0 24px 70px rgba(0,0,0,.7),0 0 50px color-mix(in srgb,var(--acc) 14%,transparent);animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
+  .m-eyebrow2{font-size:10.5px;font-weight:600;letter-spacing:.26em;text-transform:uppercase;color:var(--acc)}
+  .modal-card h3,.bye h3{margin:6px 0 16px;font:italic 600 34px/1.1 "Cormorant Garamond",Georgia,serif}
+  .modal-p{margin:-6px 0 18px;font-size:13.5px;line-height:1.6;color:rgba(255,255,255,.62)}
+  .set-row{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:13px 0;border-top:1px solid rgba(255,255,255,.08);cursor:pointer}
+  .set-row b{display:block;font-size:13.5px;font-weight:600}
+  .set-row small{display:block;margin-top:2px;font-size:11.5px;color:rgba(255,255,255,.5)}
+  .set-row input[type=range]{width:130px;accent-color:var(--acc)}
+  .sw{appearance:none;-webkit-appearance:none;flex:none;width:44px;height:25px;border-radius:999px;background:rgba(255,255,255,.14);position:relative;cursor:pointer;transition:background .25s}
+  .sw::after{content:"";position:absolute;top:3px;left:3px;width:19px;height:19px;border-radius:50%;background:#fff;transition:transform .25s cubic-bezier(.3,1.35,.5,1)}
+  .sw:checked{background:var(--acc)}.sw:checked::after{transform:translateX(19px);background:#0b0d14}
+  .sw:focus-visible,.set-row input[type=range]:focus-visible{outline:2px solid var(--acc);outline-offset:3px}
+  .modal-btns{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+  .mb{font:600 12px Inter,sans-serif;letter-spacing:.18em;text-transform:uppercase;padding:11px 20px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:transparent;color:#fff;cursor:pointer;transition:transform .2s,border-color .2s,background .2s}
+  .mb:hover{border-color:var(--acc);transform:translateY(-1px)}
+  .mb-primary{background:color-mix(in srgb,var(--acc) 30%,transparent);border-color:color-mix(in srgb,var(--acc) 70%,transparent)}
+  .bye{background:#000;flex-direction:column;text-align:center;z-index:60;animation-duration:.9s}
+  .bye-in{font-family:Inter,system-ui,sans-serif;color:#fff}
+  .bye h3{font-size:clamp(34px,6vw,60px);margin:10px 0 26px}
+  @media (prefers-reduced-motion: reduce){.modal,.bye,.modal-card,#hero .pick .mi{animation:none}}
+
+  /* ---- Journey tracker: Earth > Moon > Mars (linear) ---- */
+  .toggle-container .toggle-btn.locked{opacity:.38;cursor:not-allowed}
+  .toggle-container .toggle-btn.locked:hover{color:rgba(255,255,255,.55)}
+  .toggle-container .toggle-btn.locked::after{content:"\1F512";font-size:.8em;margin-left:6px;letter-spacing:0}
+
+  /* ---- Hover caption under the globe ---- */
+  #cap{position:fixed;left:66%;bottom:9vh;transform:translate(-50%,10px);z-index:6;text-align:center;pointer-events:none;opacity:0;transition:opacity .35s ease,transform .35s ease;font-family:Inter,system-ui,sans-serif;color:#fff;padding:12px 20px 14px;border-radius:16px;background:rgba(10,14,26,.72);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid color-mix(in srgb,var(--acc) 45%,transparent);box-shadow:0 12px 36px rgba(0,0,0,.55)}
+  #cap.on{opacity:1;transform:translate(-50%,0)}
+  html[data-sel="on"] #cap{display:none}
+  .cap-eye{font-size:10px;font-weight:600;letter-spacing:.26em;text-transform:uppercase;color:var(--acc)}
+  .cap-title{margin-top:4px;font:italic 600 26px/1.1 "Cormorant Garamond",Georgia,serif}
+  .cap-track{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.4)}
+  .cap-track i{font-style:normal;position:relative;padding-left:14px}
+  .cap-track i::before{content:"";position:absolute;left:0;top:50%;width:7px;height:7px;margin-top:-3.5px;border-radius:50%;border:1px solid currentColor}
+  .cap-track i.done{color:rgba(255,255,255,.75)}.cap-track i.done::before{background:currentColor}
+  .cap-track i.cur{color:#fff}.cap-track i.cur::before{background:var(--acc);border-color:var(--acc);box-shadow:0 0 0 0 var(--acc);animation:ping 2s ease-out infinite}
+  .cap-track b{width:14px;height:1px;background:rgba(255,255,255,.2)}
+  @keyframes ping{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--acc) 70%,transparent)}100%{box-shadow:0 0 0 8px transparent}}
+  @media (max-width:900px){#cap{display:none}}
+  @media (prefers-reduced-motion: reduce){#cap{transition:none}.cap-track i.cur::before{animation:none}}
+
+  /* ---- Segmented control (settings) ---- */
+  .seg{display:inline-flex;flex:none;padding:3px;border-radius:999px;background:rgba(255,255,255,.08)}
+  .seg button{border:0;border-radius:999px;padding:6px 12px;font:600 11px Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.6);background:transparent;cursor:pointer;transition:background .25s,color .25s}
+  .seg button.on{background:var(--acc);color:#0b0d14}
+  .seg button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+
+  /* ====================================================================
+     LOGO THEME: monochrome white line-art, sharp rectangular frames,
+     offset double-outline motif, blocky geometric uppercase type.
+     ==================================================================== */
+  html,html[data-body],html[data-body="mars"],html[data-body="earth"],html[data-body="moon"]{--acc:#ffffff;--ln:rgba(255,255,255,.55);--pan:rgba(0,0,0,.78)}
+
+  /* square everything */
+  .toggle-container,.toggle-container::before,.toggle-btn,#card,.mi,.mi::before,.modal-card,.mb,.seg,.seg button,
+  #tooltip,#cap,#coord,#coord-toast,button,#dots button,#hint,.sw,.sw::after,.set-row input[type=range],kbd{border-radius:0!important}
+
+  /* fonts: blocky geometric caps for headings, clean sans for body */
+  h2,.cap-title,.modal-card h3,.bye h3{font-family:Michroma,Inter,sans-serif!important;font-style:normal!important;font-weight:400!important;text-transform:uppercase;letter-spacing:.14em}
+  h2{font-size:clamp(17px,1.6vw,22px)!important;line-height:1.25!important}
+  html[data-sel="on"] h2{font-size:clamp(24px,2.8vw,40px)!important;line-height:1.2!important}
+  .cap-title{font-size:15px!important}
+  .modal-card h3{font-size:20px!important}
+  .bye h3{font-size:clamp(22px,4vw,40px)!important}
+  #yr,.m-eyebrow2,.cap-eye{letter-spacing:.28em;color:rgba(255,255,255,.7)}
+
+  /* logo-style double frame: panel + offset outline behind it */
+  #card,.modal-card{border:1px solid rgba(255,255,255,.8)!important;
+    background:rgba(0,0,0,.78)!important;box-shadow:none!important;overflow:visible!important}
+  #card::after,.modal-card::after{content:"";position:absolute;inset:0;transform:translate(10px,10px);border:1px solid rgba(255,255,255,.4);pointer-events:none;z-index:-1}
+  .modal-card{position:relative}
+  #bar{background:rgba(255,255,255,.12)}
+  #bar i{box-shadow:none}
+
+  /* toggle: framed segments with an outlined active block */
+  .toggle-container{border:1px solid rgba(255,255,255,.8)!important;background:rgba(0,0,0,.7)!important;box-shadow:6px 6px 0 -1px #000,6px 6px 0 0 rgba(255,255,255,.4)!important}
+  .toggle-container::before{background:rgba(255,255,255,.14)!important;border:1px solid #fff;box-shadow:none!important}
+  .toggle-btn{font-family:Michroma,Inter,sans-serif!important;font-weight:400!important;letter-spacing:.2em}
+
+  /* menu items: flat framed rows with a white bar */
+  .mi{border:1px solid rgba(255,255,255,.45)!important;background:rgba(0,0,0,.6)!important;box-shadow:none!important}
+  .mi::before{width:3px;background:#fff;box-shadow:none}
+  .mi:hover:not(:disabled),.mi:focus-visible{background:rgba(255,255,255,.1)!important;border-color:#fff!important;box-shadow:5px 5px 0 -1px #000,5px 5px 0 0 rgba(255,255,255,.4)!important}
+  .mi-primary{border-color:#fff!important;background:rgba(255,255,255,.08)!important}
+  .mi-t b{font-weight:400}
+  .mi kbd,.menu-keys kbd{border:1px solid rgba(255,255,255,.5);background:transparent}
+
+  /* buttons, dots, switches, segmented control */
+  button{border-color:rgba(255,255,255,.55)}
+  .btns button:hover:not(:disabled){border-color:#fff;background:rgba(255,255,255,.08)}
+  button.on,.seg button.on{background:#fff!important;color:#000!important;border-color:#fff}
+  #next{border-color:#fff;background:transparent}
+  #sim{border-color:rgba(255,255,255,.55)}
+  #dots button{border:1px solid #fff;background:transparent}
+  #dots button.cur{background:#fff;box-shadow:none;transform:none}
+  #dots button:hover{transform:none;background:rgba(255,255,255,.4)}
+  .seg{background:transparent;border:1px solid rgba(255,255,255,.55)}
+  .sw{background:transparent;border:1px solid rgba(255,255,255,.7)}
+  .sw::after{border:0;background:#fff;width:17px;height:17px;top:3px;left:3px}
+  .sw:checked{background:#fff}.sw:checked::after{background:#000;transform:translateX(19px)}
+  .mb{border:1px solid rgba(255,255,255,.6);font-weight:500}
+  .mb-primary{background:#fff;color:#000;border-color:#fff}
+  .set-row{border-top:1px solid rgba(255,255,255,.2)}
+
+  /* tooltips, caption, coordinates */
+  #tooltip,#cap,#coord,#coord-toast{border:1px solid rgba(255,255,255,.7)!important;background:rgba(0,0,0,.85)!important;box-shadow:none!important}
+  #coord-dot{border-radius:0;border-color:#fff;box-shadow:none}
+  .cap-track i::before{border-radius:0}
+  .cap-track i.cur::before{background:#fff;border-color:#fff;animation:none}
+  #hero .site-links button{color:#fff}
+
+  /* ---- Thicker UI + normal font ---- */
+  html,body,button,h2,.cap-title,.modal-card h3,.bye h3,.mi-t b,.mb,#tooltip,#cap,#coord{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif!important}
+  h2,.cap-title,.modal-card h3,.bye h3{font-weight:800!important;text-transform:none!important;letter-spacing:-.01em!important}
+  h2{font-size:clamp(22px,2vw,28px)!important}
+  html[data-sel="on"] h2{font-size:clamp(30px,3.4vw,50px)!important}
+  .cap-title{font-size:20px!important}
+  .modal-card h3{font-size:26px!important}
+  .bye h3{font-size:clamp(28px,5vw,48px)!important}
+  .mi-t b{font-weight:800!important;font-size:24px!important;letter-spacing:.14em!important}
+  .mi-t small{font-size:12.5px;color:rgba(255,255,255,.7)}
+  #tx{font-size:15.5px!important;font-weight:500;color:#fff}
+  html[data-sel="on"] #tx{font-size:clamp(16px,1.3vw,19px)!important}
+  #yr,.m-eyebrow2,.cap-eye{font-weight:700!important;color:#fff}
+  button,.mb{font-weight:700!important}
+
+  /* thicker lines */
+  #card,.modal-card,#tooltip,#cap,#coord,#coord-toast{border-width:2px!important}
+  #card::after,.modal-card::after{border-width:2px;transform:translate(12px,12px);border-color:rgba(255,255,255,.5)}
+  .mi{border-width:2px!important;padding:16px 18px 16px 16px}
+  .mi::before{width:5px}
+  .mi:hover:not(:disabled),.mi:focus-visible{box-shadow:6px 6px 0 -2px #000,6px 6px 0 0 rgba(255,255,255,.6)!important}
+  .mi kbd,.menu-keys kbd{border-width:2px;font-weight:700;color:#fff}
+  button,.mb,.seg{border-width:2px}
+  .btns button{padding:9px 18px;font-size:14px}
+  #dots button{width:12px;height:12px;border-width:2px}
+  #bar{height:4px}
+  .sw{width:50px;height:28px;border-width:2px}
+  .sw::after{width:18px;height:18px;top:3px;left:3px}
+  .sw:checked::after{transform:translateX(22px)}
+  .set-row{border-top-width:2px}
+  .set-row b{font-size:14.5px;font-weight:700}
+  .set-row small{font-size:12.5px;color:rgba(255,255,255,.7)}
+  .set-row input[type=range]{height:6px}
+  #hint{font-weight:600;color:rgba(255,255,255,.7)}
+
+  /* ---- Bigger, thicker icons ---- */
+  .mi-c{width:26px;font-size:26px;line-height:1;font-weight:900;-webkit-text-stroke:2px currentColor;text-shadow:0 0 0 currentColor}
+  .mi{gap:14px}
+  .mi kbd,.menu-keys kbd{font-size:15px!important;font-weight:800!important;min-width:32px!important;padding:5px 9px!important;border-width:2px!important;line-height:1.1}
+  #next span{font-size:20px;line-height:1;-webkit-text-stroke:1.5px currentColor;vertical-align:-2px}
+
+  /* comet layer sits behind the globe canvas */
+  #comets{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;display:block}
+  #c{position:relative;z-index:1}
+
+  /* logo image: crisp white, no blur or glow */
+  #hero .site-logo{filter:none}
+
+  /* ---- Menu nudge: buttons 5px left / 20px down, key hints a further 16px down ---- */
+  #hero .pick{position:relative;left:-5px;top:20px}
+  #hero .pick .menu-keys{position:relative;top:16px}
+
+  /* ---- Tagline under logo (zero height, so it doesn't shift the layout) ---- */
+  #hero .tagline{height:0;margin:0;position:relative;top:10px;text-align:center;white-space:nowrap;font:500 11px/14px Inter,system-ui,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.42);animation:rise 1s cubic-bezier(.2,.8,.2,1) both 1s}
+  @media (max-width:900px){#hero .tagline{font-size:9.5px;letter-spacing:.14em}}
+  @media (prefers-reduced-motion: reduce){#hero .tagline{animation:none}}
+
+  /* ---- Tighter menu boxes: chevron floats at the right instead of reserving space left of the text ---- */
+  #hero .pick{width:min(280px,86vw)}
+  .mi{gap:0!important;padding:14px 18px!important}
+  .mi-c{position:absolute;right:12px;top:50%;margin-top:-13px;width:auto!important}
 </style>
 </head>
 <body>
@@ -287,26 +472,66 @@
 </svg>
 
 <header id="hero" aria-label="Abandoned but Not Forgotten">
-  <h1>
-    <span class="ln l1"><span class="cap">A</span>bandoned</span>
-    <span class="ln l2">but Not</span>
-    <span class="ln l3">Forgotten</span>
+  <h1 class="logo-wrap">
+    <img class="site-logo" src="Assets/logo.png" alt="Abandoned but Not Forgotten"
+         onerror="var e=['svg','webp','jpg'],n=+this.dataset.n||0;if(n<e.length){this.dataset.n=n+1;this.src='Assets/logo.'+e[n];}">
   </h1>
-  <div class="toggle-container">
-    <button id="btn-moon" class="toggle-btn active" onclick="switchBody('moon')">Moon</button>
-    <button id="btn-mars" class="toggle-btn" onclick="switchBody('mars')">Mars</button>
-  </div>
-  <div class="pick">
-    <button id="mission" class="mission" type="button" aria-label="Explore mission">
-      <span class="m-eyebrow"></span>
-      <span class="m-name"></span>
-      <span class="m-tag"></span>
-      <span class="m-stats"></span>
-      <span class="m-cta">Simulate <i aria-hidden="true">&#9656;</i></span>
+  <p class="tagline">A simulation of equipment discarded by NASA</p>
+  <nav class="pick menu" id="menu" aria-label="Main menu">
+    <button class="mi" data-act="new" type="button">
+      <i class="mi-c" aria-hidden="true">&#9656;</i>
+      <span class="mi-t"><b>New Game</b><small id="sub-new">Start your journey at Earth</small></span>
     </button>
-    <div id="site-links" class="site-links" aria-hidden="true" hidden></div>
-  </div>
+    <button class="mi" data-act="continue" type="button" id="mi-continue" disabled>
+      <i class="mi-c" aria-hidden="true">&#9656;</i>
+      <span class="mi-t"><b>Continue</b><small id="sub-continue">No saved progress</small></span>
+    </button>
+    <button class="mi" data-act="settings" type="button">
+      <i class="mi-c" aria-hidden="true">&#9656;</i>
+      <span class="mi-t"><b>Settings</b><small>Globe, speed and hints</small></span>
+    </button>
+    <button class="mi mi-quit" data-act="quit" type="button">
+      <i class="mi-c" aria-hidden="true">&#9656;</i>
+      <span class="mi-t"><b>Quit</b><small>Leave the viewer</small></span>
+    </button>
+    <div class="menu-keys" aria-hidden="true"><span><kbd>&uarr;</kbd><kbd>&darr;</kbd> Navigate</span><span><kbd>Enter</kbd> Select</span></div>
+  </nav>
 </header>
+<div id="cap" aria-hidden="true"><div class="cap-eye"></div><div class="cap-title"></div><div class="cap-track"><i>Earth</i><b></b><i>Moon</i><b></b><i>Mars</i></div></div>
+
+<div id="modal" class="modal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div id="pane-settings" hidden>
+      <div class="m-eyebrow2">Options</div>
+      <h3 id="modal-title">Settings</h3>
+      <label class="set-row"><span><b>Auto-rotate globe</b><small>Slowly spin while idle</small></span>
+        <input type="checkbox" id="set-rotate" class="sw"></label>
+      <label class="set-row"><span><b>Rotation speed</b><small id="set-speed-val">Normal</small></span>
+        <input type="range" id="set-speed" min="0.25" max="3" step="0.25" value="1"></label>
+      <div class="set-row" style="cursor:default"><span><b>Graphics quality</b><small id="set-q-val">Sharper globes, heavier on older devices</small></span>
+        <div class="seg" id="set-quality" role="group" aria-label="Graphics quality"><button type="button" data-q="low">Low</button><button type="button" data-q="medium">Med</button><button type="button" data-q="high">High</button></div></div>
+      <label class="set-row"><span><b>Show hints</b><small>Controls reminder at the bottom</small></span>
+        <input type="checkbox" id="set-hints" class="sw"></label>
+      <div class="modal-btns"><button type="button" class="mb" id="set-reset">Reset</button><button type="button" class="mb mb-primary" data-close>Back</button></div>
+    </div>
+    <div id="pane-newgame" hidden>
+      <div class="m-eyebrow2">Confirm</div>
+      <h3>Start a new game?</h3>
+      <p class="modal-p" id="newgame-msg">Your saved progress will be replaced.</p>
+      <div class="modal-btns"><button type="button" class="mb" data-close>Cancel</button><button type="button" class="mb mb-primary" id="newgame-yes">New Game</button></div>
+    </div>
+    <div id="pane-quit" hidden>
+      <div class="m-eyebrow2">Confirm</div>
+      <h3>Quit the viewer?</h3>
+      <p class="modal-p">Your last visited site is saved, so you can pick up again from Continue.</p>
+      <div class="modal-btns"><button type="button" class="mb" data-close>Stay</button><button type="button" class="mb mb-primary" id="quit-yes">Quit</button></div>
+    </div>
+  </div>
+</div>
+<div id="bye" class="bye" hidden>
+  <div class="bye-in"><div class="m-eyebrow2">Transmission ended</div><h3>Abandoned but not forgotten.</h3><button type="button" class="mb mb-primary" id="bye-back">Return to menu</button></div>
+</div>
+
 
 <div id="panel">
 <section id="card">
@@ -318,11 +543,12 @@
 <p id="note">NASA 3D interactive model viewer with surface telemetry pinpoints.</p>
 </section></div>
 
-<div id="hint">Drag to rotate · Scroll to zoom · Y coordinates · Esc to return</div>
+<div id="hint">Drag to rotate · Scroll to zoom · Y coordinates · H move globe · Esc to return</div>
 <div id="tooltip"></div>
 <div id="coord" aria-hidden="true"></div>
 <div id="coord-dot" aria-hidden="true"></div>
 <div id="coord-toast" role="status" aria-live="polite"></div>
+<canvas id="comets" aria-hidden="true"></canvas>
 <canvas id="c"></canvas>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -332,18 +558,19 @@
 
 <script>
 const OBJ=[
+{name:'Earth',body:'earth',yr:'',lat:28.57,lon:-80.65,m:'earth',t:'Every journey in this story begins here. Apollo 15 lifted off from the Kennedy Space Center in July 1971, and Opportunity launched from Cape Canaveral in July 2003. Both left Earth for worlds that would one day be silent.'},
 {name:'Apollo 15 rover',body:'moon',yr:'1971',lat:26.132,lon:3.633,m:'lrv',t:'Apollo 15 brought the first Lunar Roving Vehicle to the Moon. Rovers were left behind on Apollo 15, 16 and 17. This one is parked near Hadley Rille, where its TV camera filmed the crew’s liftoff.'},
 {name:'Opportunity',body:'mars',yr:'2004 to 2018',lat:-1.95,lon:-5.53,m:'mars',t:'Opportunity landed in 2004 for a 90-day mission and kept driving for more than fourteen years. In June 2018, a planet-wide dust storm blocked the sunlight it depended on, and it never woke up. It rests in Perseverance Valley.'},
 ];
 
-const $=id=>document.getElementById(id),tx=$('tx'),nm=$('nm'),yr=$('yr'),simBtn=$('sim'),nextBtn=$('next'),xb=$('x'),tooltip=$('tooltip'),siteLinksCont=$('site-links');
+const $=id=>document.getElementById(id),tx=$('tx'),nm=$('nm'),yr=$('yr'),simBtn=$('sim'),nextBtn=$('next'),xb=$('x'),tooltip=$('tooltip');
 const INTRO='Since the 1960s, NASA has left hardware on the Moon and Mars. Hover over pinpoints to explore the sites.';
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const canvas = document.getElementById('c');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "high-performance" });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-renderer.setClearColor(0x000000);
+renderer.setClearColor(0x000000, 0); // transparent so the comet layer behind shows through
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 0.98;
@@ -351,13 +578,16 @@ renderer.toneMappingExposure = 0.98;
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 200);
 
+// DEFAULT SIZE of the celestial bodies on the landing view (also the max zoom-out).
+// Lower = bigger, higher = smaller.  1.15 = original, 1.06 = very large, 1.10 = default now.
+const DEFAULT_SIZE = 1.10;
 function getFitZoom() {
   const aspect = camera.aspect || 1;
   const vFOV = THREE.MathUtils.degToRad(camera.fov);
   const distV = 1 / Math.sin(vFOV / 2);
   const hFOV = 2 * Math.atan(Math.tan(vFOV / 2) * aspect);
   const distH = 1 / Math.sin(hFOV / 2);
-  return Math.max(distV, distH) * 1.15;
+  return Math.max(distV, distH) * DEFAULT_SIZE;
 }
 
 const MIN_ZOOM = 1.65;
@@ -370,23 +600,93 @@ const sun = new THREE.DirectionalLight(0xffffff, 2.5);
 sun.position.set(-4.5, 2.2, 4.0);
 scene.add(sun);
 
+let viewShift = 10;
+
+// ---- Move-globe feature (keys H and G) -----------------------------------
+// userShiftX is a fraction of the screen width: 0 = original spot,
+// +0.10 = globe moved right by 10% of the width, -0.10 = moved left.
+// userShiftTarget is where we WANT it; userShiftX glides toward it for smooth motion.
+// userShiftDefault is the saved position that is used every time the page loads.
+const SHIFT_KEY = 'GLOBE_SHIFT_DEFAULT';
+// PERMANENT default: if the browser can't remember your saved position, press G, then paste
+// the number it gives you here (this value is baked into the file, so it always works).
+const HARDCODED_SHIFT = 0;
+let userShiftDefault = HARDCODED_SHIFT;
+try {
+  const saved = parseFloat(localStorage.getItem(SHIFT_KEY)); // read the saved default (if any)
+  if (!isNaN(saved)) userShiftDefault = saved;
+} catch (e) {}
+let userShiftX = userShiftDefault;
+let userShiftTarget = userShiftDefault;
+
+// ---- Saved zoom (saved together with the position when you press G) ----
+// 0 means "no saved zoom", so the page starts fully zoomed out like before.
+const ZOOM_KEY = 'GLOBE_ZOOM_DEFAULT';
+const HARDCODED_ZOOM = 0; // paste the number G gives you here for a permanent default
+let userZoomDefault = HARDCODED_ZOOM;
+try {
+  const savedZoom = parseFloat(localStorage.getItem(ZOOM_KEY));
+  if (!isNaN(savedZoom)) userZoomDefault = savedZoom;
+} catch (e) {}
+if (userZoomDefault > 0) {
+  // Only enforce the closest allowed zoom here; resize() below already caps the far end.
+  targetZoom = Math.max(MIN_ZOOM, userZoomDefault);
+  camera.position.z = targetZoom; // start there immediately instead of gliding in
+}
+
+// The shift only applies while you are zoomed in. As you zoom back out to the full view,
+// it fades to 0 so the globe returns to its ORIGINAL spot.
+// shiftZoomRef = the zoom distance at which the shift is at full strength
+// (the zoom you were at when you last moved the globe or pressed G).
+let shiftZoomRef = (userZoomDefault > 0) ? Math.max(MIN_ZOOM, userZoomDefault) : MIN_ZOOM;
+
+// Returns 0..1: 1 = full shift (at or closer than shiftZoomRef), 0 = fully zoomed out.
+function shiftBlend(z) {
+  const span = MAX_ZOOM - shiftZoomRef;   // how far the zoom-out range is from the reference
+  if (span < 0.05) return 0;              // reference is basically "fully zoomed out"
+  return Math.max(0, Math.min(1, (MAX_ZOOM - z) / span));
+}
+
+// One helper that sets the camera's sideways offset. It combines:
+//  1) the original built-in offset (only on wide screens), and
+//  2) the user's own left/right shift.
+// A bigger offset moves the camera window right, which makes the globe appear further LEFT,
+// so we SUBTRACT the user shift to make "positive = globe moves right".
+function applyViewOffset() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  const baseX = (w > 900) ? (-w * 0.16 + viewShift) : 0;
+  // effective shift = your shift scaled by how zoomed-in the camera currently is
+  const effShift = userShiftX * shiftBlend(camera.position.z);
+  const totalX = baseX - effShift * w;
+  if (w > 900 || Math.abs(effShift) > 0.0001) camera.setViewOffset(w, h, totalX, 0, w, h);
+  else camera.clearViewOffset();
+  camera.updateProjectionMatrix();
+}
+
 function resize() {
   const w = canvas.clientWidth, h = canvas.clientHeight;
   renderer.setSize(w, h, false);
   camera.aspect = w / h;
-  if (w > 900) camera.setViewOffset(w, h, -w * 0.16, 0, w, h); else camera.clearViewOffset();
-  camera.updateProjectionMatrix();
+  applyViewOffset();
   MAX_ZOOM = getFitZoom();
   targetZoom = Math.min(targetZoom, MAX_ZOOM);
 }
 addEventListener('resize', resize);
 resize();
 
+const earthGroup = new THREE.Group();
 const moonGroup = new THREE.Group();
 const marsGroup = new THREE.Group();
+scene.add(earthGroup);
 scene.add(moonGroup);
 scene.add(marsGroup);
+const GROUPS = { earth: earthGroup, moon: moonGroup, mars: marsGroup };
+const groupOf = b => GROUPS[b] || moonGroup;
+const SCALE_T = { earth: 1, moon: 0, mars: 0 };
 
+earthGroup.rotation.x = 0.2;
+moonGroup.scale.setScalar(0.001);
+moonGroup.visible = false;
 marsGroup.scale.setScalar(0.001);
 marsGroup.visible = false;
 
@@ -396,6 +696,7 @@ marsGroup.visible = false;
 // Press "C" in the viewer to calibrate live (arrows nudge, F flips), values print on screen + console.
 const ALIGN = {
   moon: { lon: 177.9, lat: 0, flip: false }, // calibrated: Apollo 15 (26.132N, 3.633E) read 178.48W at lon 0
+  earth: { lon: 0, lat: 0, flip: false },
   mars: { lon: -90.55, lat: 1.73, flip: false } // calibrated: Opportunity (1.95S, 5.53W) read 0.217S, 96.082W at lon 0 / lat 0
 };
 const dirV=(la,lo,body='moon')=>{
@@ -446,8 +747,7 @@ const pins = OBJ.map((o, i) => {
   group.userData.phase = i * 0.47;
   group.userData.dir = dir;
 
-  if (o.body === 'moon') moonGroup.add(group);
-  else marsGroup.add(group);
+  groupOf(o.body).add(group);
   return group;
 });
 
@@ -466,14 +766,14 @@ return g;},
 heli(){const g=new THREE.Group();g.add(mk(new THREE.BoxGeometry(.16,.16,.16),WHITE,0,.4,0),mk(new THREE.CylinderGeometry(.012,.012,.3,6),GRAY,0,.62,0),mk(new THREE.BoxGeometry(.3,.015,.2),PANEL,0,.8,0));
 const a=mk(new THREE.BoxGeometry(.9,.01,.05),DARK,0,.7,0),b=mk(new THREE.BoxGeometry(.9,.01,.05),DARK,0,.76,0);g.add(a,b);g.userData.spin=[a,b];legs(g,4,.1,.25,.34,.5,GRAY);return g;}
 };
-const build=k=>k=='mars'?M.rover(k):M[k]();
+const build=k=>(k=='mars'||k=='lrv')?M.rover(k):M[k]();
 
 // ---- Snap pins onto the real mesh surface --------------------------------
-const bodyRoot = { moon: null, mars: null };
+const bodyRoot = { earth: null, moon: null, mars: null };
 const _ray = new THREE.Raycaster();
 function snapPin(i){
   const o = OBJ[i], p = pins[i];
-  const grp = o.body === 'moon' ? moonGroup : marsGroup;
+  const grp = groupOf(o.body);
   const root = bodyRoot[o.body];
   const dir = siteDir(o);
   p.userData.dir = dir;
@@ -566,6 +866,40 @@ function setupModel(filename, targetGroup, isMars = false) {
     console.error(`Could not load ${filename}.`, error);
   });
 }
+
+// ---- Earth (Assets/earth.glb) with a simple built-in fallback ----
+function earthFallback() {
+  const g = new THREE.Group();
+  const globe = new THREE.Mesh(new THREE.SphereGeometry(1, 64, 48), new THREE.MeshStandardMaterial({ color: 0x2b6cb0, roughness: 0.75, metalness: 0 }));
+  const haze = new THREE.Mesh(new THREE.SphereGeometry(1.04, 48, 36), new THREE.MeshBasicMaterial({ color: 0x6fc3ff, transparent: true, opacity: 0.16, side: THREE.BackSide, depthWrite: false }));
+  g.add(globe, haze);
+  earthGroup.add(g);
+  bodyRoot.earth = globe;
+  snapBody('earth');
+}
+loader.load('Assets/earth.glb', gltf => {
+  const root = gltf.scene;
+  root.traverse(child => {
+    if (child.isMesh && child.material) {
+      (Array.isArray(child.material) ? child.material : [child.material]).forEach(m => {
+        if (m.map) { m.map.encoding = THREE.sRGBEncoding; m.map.needsUpdate = true; }
+        if (m.emissiveMap) m.emissiveMap.encoding = THREE.sRGBEncoding;
+        m.needsUpdate = true;
+      });
+    }
+  });
+  const bounds = new THREE.Box3().setFromObject(root);
+  const center = bounds.getCenter(new THREE.Vector3());
+  const size = bounds.getSize(new THREE.Vector3());
+  root.position.sub(center);
+  root.scale.setScalar(2 / Math.max(size.x, size.y, size.z));
+  earthGroup.add(root);
+  bodyRoot.earth = root;
+  snapBody('earth');
+}, undefined, err => {
+  console.warn('Could not load Assets/earth.glb, using a simple stand-in globe.', err);
+  earthFallback();
+});
 
 setupModel('Assets/moon.glb', moonGroup, false);
 setupModel('Assets/mars.glb', marsGroup, true);
@@ -660,7 +994,7 @@ addEventListener('drop', e => {
   f.arrayBuffer().then(buf => loader.parse(buf, '', prepOpportunity, err => glbFail('That file could not be parsed.')));
 });
 
-let activeBody = 'moon';
+let activeBody = 'earth';
 let sel = -1;
 let activeDisplayModel = null;
 // Aim the globe at a site using pitch + yaw only (no roll), so the poles stay upright
@@ -672,63 +1006,46 @@ function aimAt(site){
   targetYaw = -Math.atan2(d.x, d.z);
 }
 const currentQuaternion = new THREE.Quaternion();
+const SETTINGS = { rotate: true, speed: 1, hints: true, quality: 'high' };
+const STAGES = ['earth','moon','mars'];
+const BODY_NAME = { earth:'Earth', moon:'Moon', mars:'Mars' };
+const GAME = { has:false, stage:0, reached:0 }; // stage = where the player stopped, reached = furthest unlocked
 let touring = false, simulating = false, simStart = 0, simKind = '';
 const SIM_DUR = 7;
 const ray = new THREE.Raycaster(), mp = new THREE.Vector2();
 
-let moonScaleTarget = 1.0;
-let marsScaleTarget = 0.0;
+function showGlobe(b) {
+  SCALE_T.earth = SCALE_T.moon = SCALE_T.mars = 0;
+  SCALE_T[b] = 1;
+  groupOf(b).visible = true;
+}
 
 function switchBody(body) {
   if (activeBody === body) return;
   deselect();
   activeBody = body;
 
-  document.getElementById('btn-moon').classList.toggle('active', body === 'moon');
-  document.getElementById('btn-mars').classList.toggle('active', body === 'mars');
+  showGlobe(body);
 
   if (body === 'moon') {
-    moonGroup.visible = true;
-    moonScaleTarget = 1.0;
-    marsScaleTarget = 0.0;
     moonGroup.rotation.y = 0.4;
     moonGroup.rotation.x = 0.15;
-  } else {
-    marsGroup.visible = true;
-    moonScaleTarget = 0.0;
-    marsScaleTarget = 1.0;
+  } else if (body === 'mars') {
     marsGroup.rotation.y = 0.0;
     marsGroup.rotation.x = 0.0;
+  } else {
+    earthGroup.rotation.x = 0.2;
   }
   updateSiteLinks();
 }
 
-const MISSIONS = {
-  'Apollo 15 rover': { eyebrow:'Moon \u00b7 Rover', tag:'The first car ever driven on another world, still parked where the crew left it.', dist:'~28 km driven' },
-  'Opportunity':     { eyebrow:'Mars \u00b7 Rover',   tag:'Built for 90 days, it kept roaming for fourteen years until a global dust storm.', dist:'~45 km driven' }
-};
-const missionBtn = document.getElementById('mission');
-function updateSiteLinks() {
-  const site = OBJ.map((o, idx) => ({ ...o, idx })).find(o => o.body === activeBody);
-  if (!site) return;
-  const m = MISSIONS[site.name] || { eyebrow:activeBody, tag:'', dist:'' };
-  const q = s => missionBtn.querySelector(s);
-  q('.m-eyebrow').textContent = m.eyebrow;
-  q('.m-name').textContent = site.name;
-  q('.m-tag').textContent = m.tag;
-  const lat = Math.abs(site.lat).toFixed(2) + '\u00b0' + (site.lat >= 0 ? 'N' : 'S');
-  const lon = Math.abs(site.lon).toFixed(2) + '\u00b0' + (site.lon >= 0 ? 'E' : 'W');
-  const stats = q('.m-stats'); stats.textContent = '';
-  [['Year', site.yr], ['Odometer', m.dist.replace(' driven','')], ['Coords', lat + ' ' + lon]].forEach(([k, v]) => {
-    const e = document.createElement('em'), bb = document.createElement('b');
-    bb.textContent = k; e.append(bb, v); stats.appendChild(e);
-  });
-  missionBtn.setAttribute('aria-label', 'Open ' + site.name);
-  missionBtn.classList.remove('swap'); void missionBtn.offsetWidth; missionBtn.classList.add('swap');
-  missionBtn.onmouseenter = () => { if (sel >= 0) return; aimAt(site); touring = true; };
-  missionBtn.onmouseleave = () => { if (sel >= 0) return; touring = false; isHoveringGlobe = false; };
-  missionBtn.onclick = () => { touring = false; select(site.idx); };
+// The journey is linear: Earth, then Moon, then Mars. Later stages stay locked until reached.
+function goStage(body) {
+  if (STAGES.indexOf(body) > GAME.reached) return;
+  switchBody(body);
 }
+
+function updateSiteLinks() {}
 
 function setText(t){
   tx.textContent=t;
@@ -772,12 +1089,15 @@ function select(i){
   if(o.body!=activeBody) switchBody(o.body);
   sel=i;
   
-  aimAt(o);
+  if (o.body !== 'earth') aimAt(o);
   touring = false;
+  showGlobe(o.body);
   
   if(activeDisplayModel) scene.remove(activeDisplayModel);
 
-  if (o.m === 'lrv' && customRoverModel) {
+  if (o.m === 'earth') {
+    activeDisplayModel = null; // Earth is a stage, not a piece of equipment
+  } else if (o.m === 'lrv' && customRoverModel) {
     activeDisplayModel = customRoverModel.clone(true);
   } else if (o.name === 'Opportunity' && opportunityModel) {
     activeDisplayModel = opportunityModel; // reused directly (clone breaks skinned meshes)
@@ -786,13 +1106,15 @@ function select(i){
     activeDisplayModel = build(o.m);
   }
 
-  activeDisplayModel.position.set(...eq(o).pos);
-  activeDisplayModel.rotation.x = eq(o).tilt;
-  activeDisplayModel.scale.setScalar(.001);
-  scene.add(activeDisplayModel);
+  if (activeDisplayModel) {
+    activeDisplayModel.position.set(...eq(o).pos);
+    activeDisplayModel.rotation.x = eq(o).tilt;
+    activeDisplayModel.scale.setScalar(.001);
+    scene.add(activeDisplayModel);
+  }
 
   nm.textContent=o.name;
-  yr.textContent=(o.body=='moon'?'Moon, ':'Mars, ')+o.yr;
+  yr.textContent='Stage '+(STAGES.indexOf(o.body)+1)+' of 3 \u00b7 '+BODY_NAME[o.body]+(o.yr?', '+o.yr:'');
   setText(o.t);
   ui();
   tooltip.style.opacity = 0;
@@ -831,7 +1153,6 @@ nextBtn.onclick=()=>{}; // Next: placeholder, will join the game simulation in t
     cnt.textContent=sel>=0?String(list.indexOf(sel)+1).padStart(2,'0')+' / '+String(list.length).padStart(2,'0'):list.length+' sites';
     bar.style.width=touring&&sel>=0?((sel+1)/OBJ.length*100)+'%':'0%';
     card.classList.remove('swap');void card.offsetWidth;card.classList.add('swap');
-    $('btn-moon').setAttribute('aria-pressed',activeBody==='moon');$('btn-mars').setAttribute('aria-pressed',activeBody==='mars');
   }
   const wrap=n=>{const f=window[n];window[n]=function(){const r=f.apply(this,arguments);sync();return r;};};
   ['select','deselect','switchBody'].forEach(wrap);
@@ -854,10 +1175,125 @@ nextBtn.onclick=()=>{}; // Next: placeholder, will join the game simulation in t
   if(!reduce)(function spin(){stars.rotation.y+=.00018;stars.rotation.x+=.00004;requestAnimationFrame(spin);})();
 })();
 
-switchBody('moon');
 updateSiteLinks();
 tx.textContent=INTRO;
 ui();
+
+// ---- Game menu: New Game / Continue / Settings / Quit ----
+(function(){
+  const GKEY='CELESTIAL_GAME', SKEY='CELESTIAL_SETTINGS';
+  const menu=$('menu'), modal=$('modal'), bye=$('bye'), hintEl=$('hint'), cap=$('cap');
+  const items=[...menu.querySelectorAll('.mi')];
+  const get=k=>{try{return localStorage.getItem(k);}catch(e){return null;}};
+  const put=(k,v)=>{try{localStorage.setItem(k,v);}catch(e){}};
+  const speedLabel=v=>v<=.5?'Slow':v<1.5?'Normal':v<2.5?'Fast':'Very fast';
+  const QUALITY={low:1,medium:1.5,high:2};
+  const QDESC={low:'Lightest on older devices',medium:'Balanced',high:'Sharpest globes, heaviest on older devices'};
+  const stageLabel=k=>'Stage '+(k+1)+' of 3 \u00b7 '+BODY_NAME[STAGES[k]];
+
+  // ---- settings ----
+  try{Object.assign(SETTINGS,JSON.parse(get(SKEY)||'{}'));}catch(e){}
+  if(!QUALITY[SETTINGS.quality])SETTINGS.quality='high';
+  const rot=$('set-rotate'),spd=$('set-speed'),hnt=$('set-hints'),spdVal=$('set-speed-val'),qSeg=$('set-quality'),qVal=$('set-q-val');
+  function applySettings(){
+    rot.checked=!!SETTINGS.rotate;spd.value=SETTINGS.speed;hnt.checked=!!SETTINGS.hints;
+    spd.disabled=!SETTINGS.rotate;spdVal.textContent=SETTINGS.rotate?speedLabel(+SETTINGS.speed):'Off while auto-rotate is off';
+    hintEl.style.display=SETTINGS.hints?'':'none';
+    qSeg.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.q===SETTINGS.quality));
+    qVal.textContent=QDESC[SETTINGS.quality];
+    renderer.setPixelRatio(Math.min(devicePixelRatio,QUALITY[SETTINGS.quality]));resize();
+  }
+  const save=()=>{put(SKEY,JSON.stringify(SETTINGS));applySettings();};
+  rot.onchange=()=>{SETTINGS.rotate=rot.checked;save();};
+  spd.oninput=()=>{SETTINGS.speed=+spd.value;save();};
+  hnt.onchange=()=>{SETTINGS.hints=hnt.checked;save();};
+  qSeg.addEventListener('click',e=>{const q=e.target.dataset&&e.target.dataset.q;if(q){SETTINGS.quality=q;save();}});
+  $('set-reset').onclick=()=>{Object.assign(SETTINGS,{rotate:true,speed:1,hints:true,quality:'high'});save();};
+  applySettings();
+
+  // ---- saved game / linear progress ----
+  try{const g=JSON.parse(get(GKEY)||'null');if(g&&g.has){GAME.has=true;GAME.stage=Math.min(2,Math.max(0,g.stage|0));GAME.reached=Math.min(2,Math.max(GAME.stage,g.reached|0));}}catch(e){}
+  const saveGame=()=>put(GKEY,JSON.stringify(GAME));
+  const cont=$('mi-continue'), contSub=$('sub-continue');
+  function refreshGame(){
+    cont.disabled=!GAME.has;
+    contSub.textContent=GAME.has?stageLabel(GAME.stage):'No saved progress';
+  }
+  // Opening a stage records where the player stopped and unlocks the next one.
+  function reachStage(body){
+    const k=STAGES.indexOf(body);if(k<0||!GAME.has)return;
+    GAME.stage=k;GAME.reached=Math.max(GAME.reached,Math.min(k+1,2));saveGame();refreshGame();
+  }
+  const f=window.select;
+  window.select=function(i){const r=f.apply(this,arguments);if(OBJ[i])reachStage(OBJ[i].body);clearPreview();return r;};
+  const d=window.deselect;
+  window.deselect=function(){const r=d.apply(this,arguments);refreshGame();return r;};
+  refreshGame();
+
+  // ---- hover / focus previews ----
+  const eye=cap.querySelector('.cap-eye'),ttl=cap.querySelector('.cap-title'),track=[...cap.querySelectorAll('.cap-track i')];
+  const STAGE_LINE={earth:'Where the journey begins',moon:'Apollo 15 rover',mars:'Opportunity'};
+  function preview(body,k,eyebrow){
+    if(sel>=0)return;
+    showGlobe(body);
+    eye.textContent=eyebrow;
+    ttl.textContent=BODY_NAME[body]+' \u00b7 '+STAGE_LINE[body];
+    track.forEach((el,j)=>{el.className=j<k?'done':j===k?'cur':'';});
+    cap.classList.add('on');
+  }
+  function clearPreview(){cap.classList.remove('on');showGlobe(activeBody);}
+  const hook=(btn,fn)=>{btn.addEventListener('mouseenter',fn);btn.addEventListener('focus',fn);btn.addEventListener('mouseleave',clearPreview);btn.addEventListener('blur',clearPreview);};
+  hook(items[0],()=>preview('earth',0,'New game \u00b7 '+stageLabel(0).split(' \u00b7 ')[0]));
+  hook(cont,()=>{if(cont.disabled)return;preview(STAGES[GAME.stage],GAME.stage,'You stopped here \u00b7 '+stageLabel(GAME.stage).split(' \u00b7 ')[0]);});
+
+  // ---- modal handling ----
+  let lastFocus=null;
+  function openPane(id){
+    lastFocus=document.activeElement;
+    modal.querySelectorAll('[id^="pane-"]').forEach(p=>p.hidden=p.id!==id);
+    modal.hidden=false;
+    (id==='pane-settings'?rot:modal.querySelector('#'+id+' .mb-primary')).focus();
+  }
+  function closeModal(){modal.hidden=true;if(lastFocus&&lastFocus.focus)lastFocus.focus();}
+  modal.addEventListener('click',e=>{if(e.target===modal||e.target.hasAttribute('data-close'))closeModal();});
+  $('quit-yes').onclick=()=>{modal.hidden=true;bye.hidden=false;$('bye-back').focus();};
+  $('bye-back').onclick=()=>{bye.hidden=true;};
+
+  // ---- actions ----
+  function startNew(){
+    modal.hidden=true;
+    GAME.has=true;GAME.stage=0;GAME.reached=0;saveGame();
+    touring=false;select(OBJ.findIndex(o=>o.body==='earth'));
+  }
+  $('newgame-yes').onclick=startNew;
+  const actions={
+    new(){
+      if(!GAME.has)return startNew();
+      $('newgame-msg').textContent='Your saved progress ('+stageLabel(GAME.stage)+') will be replaced.';
+      openPane('pane-newgame');
+    },
+    continue(){
+      if(!GAME.has)return;
+      touring=false;select(OBJ.findIndex(o=>o.body===STAGES[GAME.stage]));
+    },
+    settings(){openPane('pane-settings');},
+    quit(){openPane('pane-quit');}
+  };
+  items.forEach(b=>b.addEventListener('click',()=>actions[b.dataset.act]()));
+
+  // ---- keyboard: arrows move through the menu, Esc closes dialogs ----
+  addEventListener('keydown',e=>{
+    if(!bye.hidden)return;
+    if(!modal.hidden){if(e.key==='Escape')closeModal();return;}
+    if(sel>=0||e.metaKey||e.ctrlKey||e.altKey)return;
+    const t=e.target&&e.target.tagName;if(t==='INPUT'||t==='TEXTAREA')return;
+    const en=items.filter(b=>!b.disabled),cur=en.indexOf(document.activeElement);
+    if(e.key==='ArrowDown'||e.key==='ArrowUp'){
+      e.preventDefault();const dlt=e.key==='ArrowDown'?1:-1;
+      en[(cur<0?(dlt>0?0:en.length-1):(cur+dlt+en.length)%en.length)].focus();
+    }
+  });
+})();
 
 let dragging=false, previousX=0, previousY=0;
 let isInteracting = false;
@@ -910,7 +1346,7 @@ canvas.addEventListener('pointermove', event => {
   previousY = event.clientY;
 
   if (sel < 0) {
-    const targetGroup = activeBody === 'moon' ? moonGroup : marsGroup;
+    const targetGroup = groupOf(activeBody);
     targetGroup.rotation.y += dx * 0.006;
     targetGroup.rotation.x = THREE.MathUtils.clamp(targetGroup.rotation.x + dy * 0.006, -1.2, 1.2);
   }
@@ -937,8 +1373,12 @@ canvas.addEventListener('pointerup', event => {
 
 canvas.addEventListener('wheel', event => {
   event.preventDefault();
+  // normalise line/page based wheels (Firefox, some mice) to pixels, then cap a single
+  // notch so a chunky mouse wheel moves in small steps instead of big jumps
+  let d = event.deltaY * (event.deltaMode === 1 ? 33 : event.deltaMode === 2 ? innerHeight : 1);
+  d = THREE.MathUtils.clamp(d, -60, 60);
   targetZoom = THREE.MathUtils.clamp(
-    targetZoom * Math.exp(event.deltaY * 0.001),
+    targetZoom * Math.exp(d * 0.0014),
     MIN_ZOOM,
     MAX_ZOOM
   );
@@ -954,24 +1394,29 @@ const clock = new THREE.Clock();
   const t = clock.elapsedTime;
   const asp = camera.aspect;
 
-  const activeGroup = activeBody === 'moon' ? moonGroup : marsGroup;
+  const activeGroup = groupOf(activeBody);
 
-  if (sel >= 0 || touring) {
+  if ((sel >= 0 || touring) && activeBody !== 'earth') {
     const wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
     activeGroup.rotation.x += (targetPitch - activeGroup.rotation.x) * 0.08;
     activeGroup.rotation.y += wrap(targetYaw - activeGroup.rotation.y) * 0.08;
     activeGroup.rotation.z = 0;
   } else {
-    if (!isInteracting && !isHoveringGlobe && !reduce) {
-      moonGroup.rotation.y += dt * 0.12;
-      marsGroup.rotation.y += dt * 0.12;
+    if (!isInteracting && !isHoveringGlobe && !reduce && SETTINGS.rotate) {
+      earthGroup.rotation.y += dt * 0.12 * SETTINGS.speed;
+      moonGroup.rotation.y += dt * 0.12 * SETTINGS.speed;
+      marsGroup.rotation.y += dt * 0.12 * SETTINGS.speed;
     }
   }
 
   const DESIRED_SELECT_ZOOM = 1.85;
   const desiredZ = sel >= 0 ? DESIRED_SELECT_ZOOM : targetZoom;
-  camera.position.z += (desiredZ - camera.position.z) * 0.06;
+  camera.position.z += (desiredZ - camera.position.z) * (1 - Math.exp(-dt * 6));
   camera.position.y += (0 - camera.position.y) * 0.06;
+  // Glide the built-in shift and the user's shift toward their targets, then update the camera.
+  viewShift += ((sel >= 0 ? 0 : 10) - viewShift) * 0.06;
+  userShiftX += (userShiftTarget - userShiftX) * 0.15;
+  applyViewOffset();
 
   if (activeDisplayModel) {
     const E = eq(OBJ[sel]);
@@ -1013,16 +1458,13 @@ const clock = new THREE.Clock();
   }
 
   const scaleSpeed = 6.0;
-  const currentMoonScale = THREE.MathUtils.lerp(moonGroup.scale.x, moonScaleTarget, dt * scaleSpeed);
-  const currentMarsScale = THREE.MathUtils.lerp(marsGroup.scale.x, marsScaleTarget, dt * scaleSpeed);
-
-  moonGroup.scale.setScalar(currentMoonScale);
-  marsGroup.scale.setScalar(currentMarsScale);
-
-  if (currentMoonScale < 0.005) moonGroup.visible = false;
-  if (currentMarsScale < 0.005) marsGroup.visible = false;
-  if (moonScaleTarget > 0.5) moonGroup.visible = true;
-  if (marsScaleTarget > 0.5) marsGroup.visible = true;
+  for (const k in GROUPS) {
+    const g = GROUPS[k];
+    const cur = THREE.MathUtils.lerp(g.scale.x, SCALE_T[k], dt * scaleSpeed);
+    g.scale.setScalar(cur);
+    if (cur < 0.005) g.visible = false;
+    if (SCALE_T[k] > 0.5) g.visible = true;
+  }
 
   camera.getWorldPosition(camPos);
 
@@ -1069,6 +1511,65 @@ const clock = new THREE.Clock();
   });
 
   renderer.render(scene, camera);
+})();
+
+// ---- Background comets: random shooting trails behind the globe ----------
+(function(){
+  if (reduce) return;
+  const cv = document.getElementById('comets'), ctx = cv.getContext('2d');
+  let W = 0, H = 0, dpr = 1;
+  function fit(){
+    dpr = Math.min(devicePixelRatio || 1, 2);
+    W = innerWidth; H = innerHeight;
+    cv.width = W * dpr; cv.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  addEventListener('resize', fit); fit();
+
+  const comets = [];
+  const rand = (a, b) => a + Math.random() * (b - a);
+  function spawn(){
+    // start just outside a random top/side edge, travel diagonally across the screen
+    const fromLeft = Math.random() < 0.5;
+    const ang = rand(0.25, 0.75) * (fromLeft ? 1 : -1) + Math.PI * (fromLeft ? 0 : 1); // mostly downward diagonals
+    const speed = rand(500, 1100);
+    const startX = Math.random() < 0.65 ? rand(-0.1, 1.1) * W : (fromLeft ? -40 : W + 40);
+    const startY = startX < 0 || startX > W ? rand(-0.1, 0.6) * H : -40;
+    comets.push({
+      x: startX, y: startY,
+      vx: Math.cos(ang) * speed, vy: Math.sin(ang) * Math.abs(Math.sin(ang)) * speed + speed * 0.15,
+      len: rand(110, 260), size: rand(1.1, 2.2),
+      life: 0, max: rand(1.2, 2.4)
+    });
+  }
+  let nextIn = rand(0.4, 1.5), last = performance.now();
+  (function tick(now){
+    requestAnimationFrame(tick);
+    const dt = Math.min((now - last) / 1000, 0.05); last = now;
+    if (document.hidden) return;
+    nextIn -= dt;
+    if (nextIn <= 0 && comets.length < 5) { spawn(); if (Math.random() < 0.25) spawn(); nextIn = rand(0.8, 3.6); }
+    ctx.clearRect(0, 0, W, H);
+    ctx.lineCap = 'round';
+    for (let i = comets.length - 1; i >= 0; i--) {
+      const c = comets[i];
+      c.x += c.vx * dt; c.y += c.vy * dt; c.life += dt;
+      const sp = Math.hypot(c.vx, c.vy), ux = c.vx / sp, uy = c.vy / sp;
+      const fade = Math.min(1, c.life / 0.25) * Math.max(0, 1 - Math.max(0, c.life - (c.max - 0.6)) / 0.6);
+      const tx = c.x - ux * c.len, ty = c.y - uy * c.len;
+      const g = ctx.createLinearGradient(c.x, c.y, tx, ty);
+      g.addColorStop(0, 'rgba(255,255,255,' + (0.95 * fade) + ')');
+      g.addColorStop(0.35, 'rgba(200,215,255,' + (0.35 * fade) + ')');
+      g.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.strokeStyle = g; ctx.lineWidth = c.size;
+      ctx.beginPath(); ctx.moveTo(c.x, c.y); ctx.lineTo(tx, ty); ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,' + fade + ')';
+      ctx.shadowColor = 'rgba(190,210,255,' + fade + ')'; ctx.shadowBlur = 10;
+      ctx.beginPath(); ctx.arc(c.x, c.y, c.size * 0.9, 0, Math.PI * 2); ctx.fill();
+      ctx.shadowBlur = 0;
+      if (c.life > c.max || c.x < -300 || c.x > W + 300 || c.y > H + 300) comets.splice(i, 1);
+    }
+  })(performance.now());
 })();
 
 // ---- Live calibrator (press C) -------------------------------------------
@@ -1128,6 +1629,90 @@ const clock = new THREE.Clock();
 })();
 
 
+// ---- Move the globe left/right (press H) and save it as default (press G) ----
+// H : turn "move mode" on/off.
+// While move mode is ON: Left/Right arrows slide the globe (Shift = bigger steps).
+//                        Mouse-wheel zoom keeps working exactly as before.
+// G : save the current position as the default (it is remembered after a page reload).
+(function(){
+  const toast = document.getElementById('coord-toast'); // reuse the small pop-up at the top
+  let moveMode = false;
+  let toastTimer = 0;
+
+  // Show a short message at the top of the screen.
+  function say(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 1600);
+  }
+
+  // Turn a fraction (0.1) into a friendly percent string ("10%").
+  const pct = v => Math.round(v * 100) + '%';
+
+  // Lock in what you currently SEE at the current zoom as the new "full" shift.
+  // We scale the shift by the current blend first, so the globe doesn't jump on screen.
+  function rebaseShift() {
+    const f = shiftBlend(targetZoom);
+    userShiftTarget *= f;
+    userShiftX *= f;
+    shiftZoomRef = targetZoom;
+  }
+
+  // The 'true' at the end means "capture phase": this listener runs BEFORE the
+  // older arrow-key code (which switches sites), so we can block it while moving the globe.
+  addEventListener('keydown', e => {
+    // Ignore typing in form fields (like the settings slider) and shortcuts such as Ctrl+H.
+    if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+    const key = e.key.toLowerCase();
+
+    // H = toggle move mode
+    if (key === 'h') {
+      if (e.repeat) return;
+      moveMode = !moveMode;
+      say(moveMode ? 'Move mode on · ← → slide · G save default' : 'Move mode off');
+      return;
+    }
+
+    // G = save the current position as the default
+    if (key === 'g') {
+      if (e.repeat) return;
+      rebaseShift(); // anchor the shift to the zoom you are at right now
+      userShiftDefault = Math.round(userShiftTarget * 1000) / 1000; // tidy number, e.g. 0.12
+      // Step 1: try to remember it in the browser, then read it back to prove it worked.
+      userZoomDefault = Math.round(targetZoom * 1000) / 1000;       // current zoom distance
+      let remembered = false;
+      try {
+        localStorage.setItem(SHIFT_KEY, String(userShiftDefault));
+        localStorage.setItem(ZOOM_KEY, String(userZoomDefault));
+        remembered = parseFloat(localStorage.getItem(SHIFT_KEY)) === userShiftDefault &&
+                     parseFloat(localStorage.getItem(ZOOM_KEY)) === userZoomDefault;
+      } catch (err) {}
+      // Step 2: also build the two lines you can paste into the file as a permanent fallback.
+      const line = 'const HARDCODED_SHIFT = ' + userShiftDefault + ';\nconst HARDCODED_ZOOM = ' + userZoomDefault + ';';
+      console.log('Paste these over the HARDCODED_SHIFT and HARDCODED_ZOOM lines in the HTML:\n' + line);
+      try { navigator.clipboard.writeText(line); } catch (err) {}
+      say(remembered
+        ? 'Default saved · position ' + pct(userShiftDefault) + ' · zoom ' + userZoomDefault
+        : 'Browser blocks saving · copied both lines, paste into the file');
+      return;
+    }
+
+    // Left / Right arrows slide the globe, but only while move mode is on.
+    if (moveMode && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+      e.preventDefault();
+      e.stopImmediatePropagation(); // stop the "previous/next site" arrow code from also running
+      const step = e.shiftKey ? 0.05 : 0.01;                    // 5% or 1% of the screen width
+      const dir = (e.key === 'ArrowRight') ? 1 : -1;           // right = +, left = -
+      userShiftTarget += dir * step;
+      userShiftTarget = Math.max(-0.45, Math.min(0.45, userShiftTarget)); // keep it on screen
+      say('Globe position ' + pct(userShiftTarget));
+    }
+  }, true);
+})();
+
 // ---- Coordinate tracker (press Y) ----------------------------------------
 // Shows the lat/lon under the cursor. Uses the exact inverse of dirV(), so the numbers
 // line up with the pin positions and respect the ALIGN calibration (press C).
@@ -1140,7 +1725,7 @@ const clock = new THREE.Clock();
   const fmt=(v,pos,neg)=>Math.abs(v).toFixed(3)+'\u00b0 '+(v>=0?pos:neg);
 
   function pick(){
-    const g=activeBody==='moon'?moonGroup:marsGroup;
+    const g=groupOf(activeBody);
     if(!g.visible)return null;
     const r=canvas.getBoundingClientRect();
     ndc.set((cx-r.left)/r.width*2-1,-(cy-r.top)/r.height*2+1);
