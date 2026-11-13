@@ -131,7 +131,7 @@
   #next span{margin-left:4px;color:var(--acc)}
   #sim{border-color:color-mix(in srgb,var(--acc) 60%,transparent)}
   button.on{color:#0b0d14}
-  #hint{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:4;font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.45);pointer-events:none;white-space:nowrap;transition:opacity 1s;animation:rise 1s ease both 5s}
+  #hint{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:4;font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.45);pointer-events:none;white-space:nowrap;transition:opacity 1s;animation:rise 0.8s ease both 1.2s}
   #hint.gone{opacity:0!important}
   #tooltip{border-radius:999px;padding:6px 14px;border-color:color-mix(in srgb,var(--acc) 50%,transparent)}
   @media (max-width:900px){#hint{display:none}.toggle-container{bottom:auto;top:auto}}
@@ -278,7 +278,7 @@
   .menu-keys{display:flex;justify-content:center;gap:16px;margin-top:6px;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.38)}
   .menu-keys span{display:inline-flex;align-items:center;gap:4px}
   #hero .pick .mi{animation:rise .7s cubic-bezier(.2,.8,.2,1) backwards}
-  #hero .pick .mi:nth-child(1){animation-delay:4.0s}#hero .pick .mi:nth-child(2){animation-delay:4.1s}#hero .pick .mi:nth-child(3){animation-delay:4.2s}#hero .pick .mi:nth-child(4){animation-delay:4.3s}
+  #hero .pick .mi:nth-child(1){animation-delay:0.55s}#hero .pick .mi:nth-child(2){animation-delay:0.62s}#hero .pick .mi:nth-child(3){animation-delay:0.69s}#hero .pick .mi:nth-child(4){animation-delay:0.76s}
   @media (max-width:900px){.mi{padding:11px 14px 11px 12px}.menu-keys{display:none}}
 
   /* ---- Modal + quit screen ---- */
@@ -452,7 +452,7 @@
   #hero .pick .menu-keys{position:relative;top:16px}
 
   /* ---- Tagline under logo (zero height, so it doesn't shift the layout) ---- */
-  #hero .tagline{height:0;margin:0;position:relative;top:10px;text-align:center;white-space:nowrap;font:500 11px/14px Inter,system-ui,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.42);animation:rise 1s cubic-bezier(.2,.8,.2,1) both 1s}
+  #hero .tagline{height:0;margin:0;position:relative;top:10px;text-align:center;white-space:nowrap;font:500 11px/14px Inter,system-ui,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.42);animation:rise 0.7s cubic-bezier(.2,.8,.2,1) both 0.45s}
   @media (max-width:900px){#hero .tagline{font-size:9.5px;letter-spacing:.14em}}
   @media (prefers-reduced-motion: reduce){#hero .tagline{animation:none}}
 
@@ -569,7 +569,7 @@ const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const canvas = document.getElementById('c');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "high-performance" });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
 renderer.setClearColor(0x000000, 0); // transparent so the comet layer behind shows through
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -896,34 +896,46 @@ loader.load('Assets/earth.glb', gltf => {
   earthGroup.add(root);
   bodyRoot.earth = root;
   snapBody('earth');
+  setTimeout(() => { loadStageAssets('moon'); loadStageAssets('mars'); }, 1200);
 }, undefined, err => {
   console.warn('Could not load Assets/earth.glb, using a simple stand-in globe.', err);
   earthFallback();
+  setTimeout(() => { loadStageAssets('moon'); loadStageAssets('mars'); }, 1200);
 });
-
-setupModel('Assets/moon.glb', moonGroup, false);
-setupModel('Assets/mars.glb', marsGroup, true);
 
 let customRoverModel = null;
-loader.load('Assets/lunar_Rover.glb', gltf => {
-  customRoverModel = gltf.scene;
-  customRoverModel.traverse((child) => {
-    if (child.isMesh && child.material) {
-      const matArr = Array.isArray(child.material) ? child.material : [child.material];
-      matArr.forEach(m => {
-        if (m.map) { m.map.encoding = THREE.sRGBEncoding; m.map.needsUpdate = true; }
-        m.needsUpdate = true;
+const loadedAssets = {};
+function loadStageAssets(body) {
+  if (loadedAssets[body]) return;
+  loadedAssets[body] = true;
+
+  if (body === 'moon') {
+    setupModel('Assets/moon.glb', moonGroup, false);
+    loader.load('Assets/lunar_Rover.glb', gltf => {
+      customRoverModel = gltf.scene;
+      customRoverModel.traverse((child) => {
+        if (child.isMesh && child.material) {
+          const matArr = Array.isArray(child.material) ? child.material : [child.material];
+          matArr.forEach(m => {
+            if (m.map) { m.map.encoding = THREE.sRGBEncoding; m.map.needsUpdate = true; }
+            m.needsUpdate = true;
+          });
+        }
       });
-    }
-  });
-  const box = new THREE.Box3().setFromObject(customRoverModel);
-  const center = box.getCenter(new THREE.Vector3());
-  const size = box.getSize(new THREE.Vector3());
-  customRoverModel.position.sub(center);
-  customRoverModel.scale.setScalar(0.22 / Math.max(size.x, size.y, size.z));
-}, undefined, err => {
-  console.error("Could not load Assets/lunar_Rover.glb", err);
-});
+      const box = new THREE.Box3().setFromObject(customRoverModel);
+      const center = box.getCenter(new THREE.Vector3());
+      const size = box.getSize(new THREE.Vector3());
+      customRoverModel.position.sub(center);
+      customRoverModel.scale.setScalar(0.22 / Math.max(size.x, size.y, size.z));
+      if (sel >= 0 && OBJ[sel].m === 'lrv') select(sel);
+    }, undefined, err => {
+      console.error("Could not load Assets/lunar_Rover.glb", err);
+    });
+  } else if (body === 'mars') {
+    setupModel('Assets/mars.glb', marsGroup, true);
+    tryLoadOpp(0);
+  }
+}
 
 function glbFail(msg){
   console.error(msg);
@@ -977,13 +989,13 @@ function prepOpportunity(gltf){
   if (sel >= 0 && OBJ[sel].name === 'Opportunity') select(sel);
 }
 const OPPORTUNITY_FILES = ['Assets/opportunity.glb'];
-(function tryLoadOpp(i, firstErr){
+function tryLoadOpp(i, firstErr){
   if (i >= OPPORTUNITY_FILES.length) {
     diagnoseGlb(new URL(encodeURI(OPPORTUNITY_FILES[0]), location.href).href, 'Assets/opportunity.glb', firstErr);
     return;
   }
   loader.load(encodeURI(OPPORTUNITY_FILES[i]), prepOpportunity, undefined, err => tryLoadOpp(i + 1, firstErr || err));
-})(0);
+}
 
 // manual fallback: drop the .glb onto the page
 addEventListener('dragover', e => e.preventDefault());
@@ -1022,6 +1034,7 @@ function showGlobe(b) {
 
 function switchBody(body) {
   if (activeBody === body) return;
+  loadStageAssets(body);
   deselect();
   activeBody = body;
 
@@ -1187,7 +1200,7 @@ ui();
   const get=k=>{try{return localStorage.getItem(k);}catch(e){return null;}};
   const put=(k,v)=>{try{localStorage.setItem(k,v);}catch(e){}};
   const speedLabel=v=>v<=.5?'Slow':v<1.5?'Normal':v<2.5?'Fast':'Very fast';
-  const QUALITY={low:1,medium:1.5,high:2};
+  const QUALITY={low:1,medium:1.25,high:1.5};
   const QDESC={low:'Lightest on older devices',medium:'Balanced',high:'Sharpest globes, heaviest on older devices'};
   const stageLabel=k=>'Stage '+(k+1)+' of 3 \u00b7 '+BODY_NAME[STAGES[k]];
 
