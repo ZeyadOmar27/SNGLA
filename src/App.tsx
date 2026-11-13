@@ -1,73 +1,133 @@
-import { Suspense } from 'react';
+import { Suspense, useCallback, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { Stars } from '@react-three/drei';
-import { Plank } from './components/Plank';
-import { Rover } from './components/Rover';
-import { LunarModule } from './components/LunarModule';
+import { Environment, Lightformer } from '@react-three/drei';
+import { Level1Landing, type LandingTelemetry } from './components/Level1Landing';
+import { Level2Rover } from './components/Level2Rover';
+import { MissionHud, type ActiveLevel } from './components/MissionHud';
+import type { DriveTelemetry } from './components/Rover';
 
-function App() {
+const INITIAL_LANDING_TELEMETRY: LandingTelemetry = {
+  altitude: 32,
+  verticalSpeed: 0,
+  horizontalSpeed: 0,
+  slopeDeg: 0,
+  fuel: 100,
+  status: 'descending',
+  failReason: null,
+};
+
+const INITIAL_DRIVE_TELEMETRY: DriveTelemetry = {
+  speed: 0,
+  distanceToSite: 68,
+  headingDeg: 0,
+  targetBearingDeg: 0,
+  reachedSite: false,
+};
+
+export function App() {
+  const [activeLevel, setActiveLevel] = useState<ActiveLevel>('level1');
+  const [level1ResetNonce, setLevel1ResetNonce] = useState(0);
+  const [level2ResetNonce, setLevel2ResetNonce] = useState(0);
+
+  const [landingTelemetry, setLandingTelemetry] = useState<LandingTelemetry>(
+    INITIAL_LANDING_TELEMETRY,
+  );
+  const [driveTelemetry, setDriveTelemetry] = useState<DriveTelemetry>(INITIAL_DRIVE_TELEMETRY);
+
+  const handleSelectLevel = useCallback((nextLevel: ActiveLevel) => {
+    setActiveLevel(nextLevel);
+    if (nextLevel === 'level1') {
+      setLandingTelemetry(INITIAL_LANDING_TELEMETRY);
+      setLevel1ResetNonce((n) => n + 1);
+    } else {
+      setDriveTelemetry(INITIAL_DRIVE_TELEMETRY);
+      setLevel2ResetNonce((n) => n + 1);
+    }
+  }, []);
+
+  const handleResetCurrentLevel = useCallback(() => {
+    if (activeLevel === 'level1') {
+      setLandingTelemetry(INITIAL_LANDING_TELEMETRY);
+      setLevel1ResetNonce((n) => n + 1);
+    } else {
+      setDriveTelemetry(INITIAL_DRIVE_TELEMETRY);
+      setLevel2ResetNonce((n) => n + 1);
+    }
+  }, [activeLevel]);
+
   return (
-    <div style={{ position: 'relative', width: '100vw', height: '100vh' }}>
+    <div className="relative h-screen w-screen overflow-hidden bg-slate-950">
       <Canvas
         shadows
-        camera={{ position: [0, 4.2, 8.5], fov: 50, near: 0.1, far: 500 }}
+        dpr={[1, 2]}
+        gl={{ antialias: true }}
+        camera={{ position: [-6, 42, 10], fov: 62, near: 0.2, far: 1400 }}
       >
-        <color attach="background" args={['#05070d']} />
-        <Stars radius={120} depth={50} count={3000} factor={3} fade />
+        <color attach="background" args={['#02040a']} />
+        <fog attach="fog" args={['#02040a', 220, 760]} />
 
-        {/* Harsh lunar-style sunlight + subtle fill */}
-        <ambientLight intensity={0.35} />
+        <ambientLight intensity={0.18} />
+        <hemisphereLight args={['#c8d6ef', '#595d65', 0.45]} />
         <directionalLight
-          position={[18, 25, 14]}
-          intensity={2.2}
+          position={[95, 42, 35]}
+          intensity={2.4}
+          color="#fffcf5"
           castShadow
           shadow-mapSize={[2048, 2048]}
-          shadow-camera-left={-25}
-          shadow-camera-right={25}
-          shadow-camera-top={25}
-          shadow-camera-bottom={-25}
+          shadow-normalBias={0.04}
+          shadow-bias={-0.0003}
+          shadow-radius={2.5}
+          shadow-camera-left={-155}
+          shadow-camera-right={155}
+          shadow-camera-top={155}
+          shadow-camera-bottom={-155}
           shadow-camera-near={1}
-          shadow-camera-far={80}
+          shadow-camera-far={280}
         />
 
-        <Plank />
+        <Environment resolution={256} frames={1}>
+          <Lightformer
+            form="rect"
+            intensity={2.2}
+            color="#fffaf0"
+            position={[18, 12, 10]}
+            scale={[14, 14, 1]}
+            target={[0, 0, 0]}
+          />
+          <Lightformer
+            form="rect"
+            intensity={0.95}
+            color="#b8d0f2"
+            position={[-16, 10, -12]}
+            scale={[18, 12, 1]}
+            target={[0, 0, 0]}
+          />
+          <Lightformer
+            form="ring"
+            intensity={0.65}
+            color="#cbd5e1"
+            position={[0, -10, 0]}
+            rotation={[-Math.PI / 2, 0, 0]}
+            scale={[30, 30, 1]}
+          />
+        </Environment>
 
         <Suspense fallback={null}>
-          <LunarModule />
-          <Rover />
+          {activeLevel === 'level1' ? (
+            <Level1Landing resetNonce={level1ResetNonce} onTelemetry={setLandingTelemetry} />
+          ) : (
+            <Level2Rover resetNonce={level2ResetNonce} onDriveTelemetry={setDriveTelemetry} />
+          )}
         </Suspense>
       </Canvas>
 
-      {/* Minimalist Controls HUD */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: 20,
-          left: 20,
-          padding: '12px 16px',
-          borderRadius: 10,
-          background: 'rgba(10, 14, 24, 0.75)',
-          border: '1px solid rgba(255, 255, 255, 0.15)',
-          backdropFilter: 'blur(8px)',
-          fontSize: 13,
-          lineHeight: 1.6,
-          pointerEvents: 'none',
-          userSelect: 'none',
-        }}
-      >
-        <div style={{ fontWeight: 600, marginBottom: 4, color: '#fff' }}>
-          Lunar Rover Controls
-        </div>
-        <div>
-          <strong>W / S</strong> — Drive Forward / Reverse
-        </div>
-        <div>
-          <strong>A / D</strong> — Steer Left / Right
-        </div>
-        <div>
-          <strong>R</strong> — Reset Position
-        </div>
-      </div>
+      <MissionHud
+        activeLevel={activeLevel}
+        landingTelemetry={landingTelemetry}
+        driveTelemetry={driveTelemetry}
+        onSelectLevel={handleSelectLevel}
+        onResetCurrentLevel={handleResetCurrentLevel}
+      />
     </div>
   );
 }

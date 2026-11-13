@@ -3,168 +3,297 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 import roverUrl from '../assets/lunar_Rover.glb?url';
-import { PLANK_LENGTH, PLANK_WIDTH } from './Plank';
-import { LM_HALF_EXTENT, LM_POSITION } from './LunarModule';
+import { prepareAndSoftenModel } from '../utils/modelHelpers';
+import { HADLEY_PLAY_LIMIT, type TerrainSampler } from '../utils/hadleyTerrain';
+import { LM_HALF_EXTENT } from './LunarModule';
+import { LunarDust } from './LunarDust';
 
-const ROVER_RADIUS = 0.8;
-
-const TARGET_ROVER_SIZE = 2.8;
-const ACCELERATION = 14;
-const MAX_SPEED = 9;
-const REVERSE_MAX_SPEED = 4.5;
-const DAMPING = 5.5;
-const TURN_SPEED = 2.2;
-
-interface KeyState {
-  w: boolean;
-  a: boolean;
-  s: boolean;
-  d: boolean;
+export interface DriveTelemetry {
+  speed: number;
+  distanceToSite: number;
+  headingDeg: number;
+  targetBearingDeg: number;
+  reachedSite: boolean;
 }
 
-export function Rover() {
+export interface RoverProps {
+  sampler: TerrainSampler;
+  spawnPos: THREE.Vector3;
+  initialHeading: number;
+  lmPos: THREE.Vector3;
+  site1Pos: THREE.Vector3;
+  resetNonce: number;
+  onDriveUpdate: (telemetry: DriveTelemetry) => void;
+}
+
+const CAMERA_FOV = 66;
+const MAX_SPEED = 11.5;
+const REVERSE_SPEED = 4.8;
+const ACCEL = 15;
+const DRAG = 4.2;
+const TURN_RATE = 1.9;
+const COLLISION_RADIUS = LM_HALF_EXTENT + 1.4;
+const SITE_ARRIVAL_RADIUS = 4.5;
+const MAX_DRIVABLE_SLOPE_DEG = 34;
+
+export function Rover({
+  sampler,
+  spawnPos,
+  initialHeading,
+  lmPos,
+  site1Pos,
+  resetNonce,
+  onDriveUpdate,
+}: RoverProps) {
   const { scene } = useGLTF(roverUrl);
-  const roverRef = useRef<THREE.Group>(null);
-  const { camera } = useThree();
+  const { gl, camera } = useThree();
 
-  const keys = useRef<KeyState>({ w: false, a: false, s: false, d: false });
-  const speed = useRef(0);
-  const heading = useRef(0);
+  const roverGroupRef = useRef<THREE.Group>(null);
+  const posRef = useRef(spawnPos.clone());
+  const headingRef = useRef(initialHeading);
+  const speedRef = useRef(0);
+  const smoothNormalRef = useRef(new THREE.Vector3(0, 1, 0));
+  const camPosRef = useRef(new THREE.Vector3());
+  const camLookRef = useRef(new THREE.Vector3());
+  const zoomRef = useRef(1);
+  const keysRef = useRef<Record<string, boolean>>({});
+  const reachedSiteRef = useRef(false);
+  const telemetryTimerRef = useRef(0);
 
-  const cameraOffset = useMemo(() => new THREE.Vector3(0, 4.2, 8.5), []);
-  const desiredCameraPos = useMemo(() => new THREE.Vector3(), []);
-  const lookAtTarget = useMemo(() => new THREE.Vector3(), []);
+  const tmpNormal = useMemo(() => new THREE.Vector3(), []);
+  const tmpRight = useMemo(() => new THREE.Vector3(), []);
+  const tmpFwdFlat = useMemo(() => new THREE.Vector3(), []);
+  const tmpZAxis = useMemo(() => new THREE.Vector3(), []);
+  const tmpBasis = useMemo(() => new THREE.Matrix4(), []);
+  const tmpQuat = useMemo(() => new THREE.Quaternion(), []);
+  const tmpDesiredCam = useMemo(() => new THREE.Vector3(), []);
+  const tmpDesiredLook = useMemo(() => new THREE.Vector3(), []);
 
-  // Normalize the GLB model so it sits centered on y = 0 at a consistent scale
-  const normalizedRover = useMemo(() => {
-    const clone = scene.clone(true);
-    clone.traverse((child) => {
-      if ((child as THREE.Mesh).isMesh) {
-        const mesh = child as THREE.Mesh;
-        mesh.castShadow = true;
-        mesh.receiveShadow = true;
-      }
+  const preparedRover = useMemo(() => {
+    return prepareAndSoftenModel(scene, {
+      targetSize: 2.8,
+      maxAnisotropy: gl.capabilities.getMaxAnisotropy(),
     });
+  }, [scene, gl]);
 
-    const box = new THREE.Box3().setFromObject(clone);
-    const size = new THREE.Vector3();
-    const center = new THREE.Vector3();
-    box.getSize(size);
-    box.getCenter(center);
+  // Initialize / reset rover cleanly at open lunar mare spawn point
+  useEffect(() => {
+    const groundY = sampler.getHeight(spawnPos.x, spawnPos.z);
+    posRef.current.set(spawnPos.x, groundY, spawnPos.z);
+    headingRef.current = initialHeading;
+    speedRef.current = 0;
+    reachedSiteRef.current = false;
+    sampler.getNormal(spawnPos.x, spawnPos.z, smoothNormalRef.current);
 
-    const maxHoriz = Math.max(size.x, size.z, 0.001);
-    const scale = TARGET_ROVER_SIZE / maxHoriz;
-    clone.scale.setScalar(scale);
+    const fwdX = -Math.sin(initialHeading);
+    const fwdZ = -Math.cos(initialHeading);
+    camPosRef.current.set(spawnPos.x - fwdX * 7.6, groundY + 3.4, spawnPos.z - fwdZ * 7.6);
+    camLookRef.current.set(spawnPos.x + fwdX * 3.5, groundY + 1.0, spawnPos.z + fwdZ * 3.5);
+    camera.position.copy(camPosRef.current);
+    camera.lookAt(camLookRef.current);
 
-    // Recompute bounds after scaling so min.y rests cleanly at y = 0
-    clone.updateMatrixWorld(true);
-    const scaledBox = new THREE.Box3().setFromObject(clone);
-    const scaledCenter = new THREE.Vector3();
-    scaledBox.getCenter(scaledCenter);
+    if (roverGroupRef.current) {
+      roverGroupRef.current.position.copy(posRef.current);
+    }
 
-    clone.position.set(-scaledCenter.x, -scaledBox.min.y, -scaledCenter.z);
-    return clone;
-  }, [scene]);
+    const dxSite = site1Pos.x - spawnPos.x;
+    const dzSite = site1Pos.z - spawnPos.z;
+    const rightX = Math.cos(initialHeading);
+    const rightZ = -Math.sin(initialHeading);
+    const forwardDot = dxSite * fwdX + dzSite * fwdZ;
+    const rightDot = dxSite * rightX + dzSite * rightZ;
+    onDriveUpdate({
+      speed: 0,
+      distanceToSite: Math.hypot(dxSite, dzSite),
+      headingDeg: (((-initialHeading * 180) / Math.PI) % 360 + 360) % 360,
+      targetBearingDeg: (Math.atan2(rightDot, forwardDot) * 180) / Math.PI,
+      reachedSite: false,
+    });
+  }, [sampler, spawnPos, initialHeading, site1Pos, resetNonce, camera, onDriveUpdate]);
 
   useEffect(() => {
-    const handleKey = (isDown: boolean) => (e: KeyboardEvent) => {
-      const k = e.key.toLowerCase();
-      if (k === 'w' || e.key === 'ArrowUp') keys.current.w = isDown;
-      if (k === 's' || e.key === 'ArrowDown') keys.current.s = isDown;
-      if (k === 'a' || e.key === 'ArrowLeft') keys.current.a = isDown;
-      if (k === 'd' || e.key === 'ArrowRight') keys.current.d = isDown;
-
-      if (isDown && k === 'r' && roverRef.current) {
-        roverRef.current.position.set(0, 0, 0);
-        roverRef.current.rotation.set(0, 0, 0);
-        speed.current = 0;
-        heading.current = 0;
-      }
+    const resetToSpawn = () => {
+      const groundY = sampler.getHeight(spawnPos.x, spawnPos.z);
+      posRef.current.set(spawnPos.x, groundY, spawnPos.z);
+      headingRef.current = initialHeading;
+      speedRef.current = 0;
+      sampler.getNormal(spawnPos.x, spawnPos.z, smoothNormalRef.current);
     };
 
-    const onKeyDown = handleKey(true);
-    const onKeyUp = handleKey(false);
+    const onKeyDown = (e: KeyboardEvent) => {
+      keysRef.current[e.code] = true;
+      if (e.code === 'KeyR') {
+        resetToSpawn();
+      }
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      keysRef.current[e.code] = false;
+    };
+    const clearKeys = () => {
+      keysRef.current = {};
+    };
+    const onWheel = (e: WheelEvent) => {
+      zoomRef.current = THREE.MathUtils.clamp(zoomRef.current + e.deltaY * 0.0008, 0.55, 1.8);
+    };
+
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
+    window.addEventListener('blur', clearKeys);
+    window.addEventListener('wheel', onWheel, { passive: true });
     return () => {
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
+      window.removeEventListener('blur', clearKeys);
+      window.removeEventListener('wheel', onWheel);
     };
-  }, []);
+  }, [sampler, spawnPos, initialHeading]);
 
   useFrame((_, rawDelta) => {
+    const group = roverGroupRef.current;
+    if (!group) return;
+
     const dt = Math.min(rawDelta, 0.05);
-    const rover = roverRef.current;
-    if (!rover) return;
 
-    const { w, a, s, d } = keys.current;
+    if (camera instanceof THREE.PerspectiveCamera && Math.abs(camera.fov - CAMERA_FOV) > 0.1) {
+      camera.fov = CAMERA_FOV;
+      camera.updateProjectionMatrix();
+    }
 
-    // Forward / reverse acceleration
-    if (w) {
-      speed.current += ACCELERATION * dt;
-    } else if (s) {
-      speed.current -= ACCELERATION * dt;
+    const keys = keysRef.current;
+    const throttle =
+      (keys['KeyW'] || keys['ArrowUp'] ? 1 : 0) -
+      (keys['KeyS'] || keys['ArrowDown'] ? 1 : 0);
+    const steer =
+      (keys['KeyA'] || keys['ArrowLeft'] ? 1 : 0) -
+      (keys['KeyD'] || keys['ArrowRight'] ? 1 : 0);
+
+    let speed = speedRef.current;
+    if (throttle > 0) {
+      speed = Math.min(MAX_SPEED, speed + ACCEL * dt);
+    } else if (throttle < 0) {
+      speed = Math.max(-REVERSE_SPEED, speed - ACCEL * 0.85 * dt);
     } else {
-      // Smoothly damp to a stop when no throttle key is pressed
-      speed.current -= speed.current * Math.min(1, DAMPING * dt);
-      if (Math.abs(speed.current) < 0.02) speed.current = 0;
+      speed *= Math.exp(-DRAG * dt);
+      if (Math.abs(speed) < 0.03) speed = 0;
     }
 
-    speed.current = THREE.MathUtils.clamp(speed.current, -REVERSE_MAX_SPEED, MAX_SPEED);
-
-    // Steering (invert turn direction when reversing)
-    const steerDir = (a ? 1 : 0) - (d ? 1 : 0);
-    if (steerDir !== 0) {
-      const reverseFactor = speed.current < -0.1 ? -1 : 1;
-      heading.current += steerDir * TURN_SPEED * reverseFactor * dt;
+    if (steer !== 0) {
+      const steerDir = speed < -0.25 ? -1 : 1;
+      const steerFactor = THREE.MathUtils.clamp(0.45 + Math.abs(speed) / MAX_SPEED, 0.45, 1.15);
+      headingRef.current += steer * steerDir * TURN_RATE * steerFactor * dt;
     }
 
-    rover.rotation.y = heading.current;
+    const fwdX = -Math.sin(headingRef.current);
+    const fwdZ = -Math.cos(headingRef.current);
 
-    // Move along local -Z forward vector
-    const forwardX = -Math.sin(heading.current);
-    const forwardZ = -Math.cos(heading.current);
+    let nextX = THREE.MathUtils.clamp(
+      posRef.current.x + fwdX * speed * dt,
+      -HADLEY_PLAY_LIMIT,
+      HADLEY_PLAY_LIMIT,
+    );
+    let nextZ = THREE.MathUtils.clamp(
+      posRef.current.z + fwdZ * speed * dt,
+      -HADLEY_PLAY_LIMIT,
+      HADLEY_PLAY_LIMIT,
+    );
 
-    rover.position.x += forwardX * speed.current * dt;
-    rover.position.z += forwardZ * speed.current * dt;
-
-    // Keep rover on the plank
-    const halfW = PLANK_WIDTH / 2 - 1.4;
-    const halfL = PLANK_LENGTH / 2 - 1.4;
-    rover.position.x = THREE.MathUtils.clamp(rover.position.x, -halfW, halfW);
-    rover.position.z = THREE.MathUtils.clamp(rover.position.z, -halfL, halfL);
-
-    // Don't drive through the Lunar Module: push the rover out of its footprint
-    const lmHalf = LM_HALF_EXTENT + ROVER_RADIUS;
-    const dx = rover.position.x - LM_POSITION[0];
-    const dz = rover.position.z - LM_POSITION[2];
-    if (Math.abs(dx) < lmHalf && Math.abs(dz) < lmHalf) {
-      if (lmHalf - Math.abs(dx) < lmHalf - Math.abs(dz)) {
-        rover.position.x = LM_POSITION[0] + Math.sign(dx || 1) * lmHalf;
-      } else {
-        rover.position.z = LM_POSITION[2] + Math.sign(dz || 1) * lmHalf;
-      }
-      speed.current *= 0.5;
+    const currentSample = sampler.sampleFootprint(posRef.current.x, posRef.current.z);
+    const nextSample = sampler.sampleFootprint(nextX, nextZ);
+    if (nextSample.slopeDeg > MAX_DRIVABLE_SLOPE_DEG && nextSample.groundY > currentSample.groundY) {
+      nextX = posRef.current.x;
+      nextZ = posRef.current.z;
+      speed *= 0.25;
     }
 
-    // Smooth third-person follow camera
-    const rotatedOffset = cameraOffset.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), heading.current);
-    desiredCameraPos.copy(rover.position).add(rotatedOffset);
-    camera.position.lerp(desiredCameraPos, 1 - Math.exp(-6 * dt));
+    const dxLm = nextX - lmPos.x;
+    const dzLm = nextZ - lmPos.z;
+    const distLmSq = dxLm * dxLm + dzLm * dzLm;
+    if (distLmSq < COLLISION_RADIUS * COLLISION_RADIUS) {
+      const distLm = Math.sqrt(distLmSq) || 0.001;
+      nextX = lmPos.x + (dxLm / distLm) * COLLISION_RADIUS;
+      nextZ = lmPos.z + (dzLm / distLm) * COLLISION_RADIUS;
+      speed *= 0.2;
+    }
 
-    lookAtTarget.set(rover.position.x, rover.position.y + 0.8, rover.position.z);
-    camera.lookAt(lookAtTarget);
+    speedRef.current = speed;
+    const groundY = sampler.getHeight(nextX, nextZ);
+    posRef.current.set(nextX, groundY, nextZ);
+    group.position.copy(posRef.current);
+
+    sampler.getNormal(nextX, nextZ, tmpNormal);
+    smoothNormalRef.current.lerp(tmpNormal, 1 - Math.exp(-10 * dt)).normalize();
+    tmpFwdFlat.set(fwdX, 0, fwdZ);
+    tmpRight.crossVectors(tmpFwdFlat, smoothNormalRef.current);
+    if (tmpRight.lengthSq() < 1e-5) {
+      tmpRight.set(Math.cos(headingRef.current), 0, -Math.sin(headingRef.current));
+    }
+    tmpRight.normalize();
+    tmpZAxis.crossVectors(tmpRight, smoothNormalRef.current).normalize();
+    tmpBasis.makeBasis(tmpRight, smoothNormalRef.current, tmpZAxis);
+    tmpQuat.setFromRotationMatrix(tmpBasis);
+    group.quaternion.slerp(tmpQuat, 1 - Math.exp(-12 * dt));
+
+    const zoom = zoomRef.current;
+    const followDist = 7.4 * zoom;
+    const followHeight = 3.2 * zoom;
+    const camGroundMin = sampler.getHeight(nextX - fwdX * followDist, nextZ - fwdZ * followDist);
+    tmpDesiredCam.set(
+      nextX - fwdX * followDist,
+      Math.max(groundY + followHeight, camGroundMin + 1.8),
+      nextZ - fwdZ * followDist,
+    );
+    tmpDesiredLook.set(nextX + fwdX * 3.0, groundY + 1.0, nextZ + fwdZ * 3.0);
+
+    camPosRef.current.lerp(tmpDesiredCam, 1 - Math.exp(-6.5 * dt));
+    camLookRef.current.lerp(tmpDesiredLook, 1 - Math.exp(-9 * dt));
+    camera.position.copy(camPosRef.current);
+    camera.lookAt(camLookRef.current);
+
+    const dxSite = site1Pos.x - nextX;
+    const dzSite = site1Pos.z - nextZ;
+    const distanceToSite = Math.hypot(dxSite, dzSite);
+    const newlyReached = !reachedSiteRef.current && distanceToSite < SITE_ARRIVAL_RADIUS;
+    if (newlyReached) {
+      reachedSiteRef.current = true;
+    }
+
+    telemetryTimerRef.current += dt;
+    if (telemetryTimerRef.current >= 0.065 || newlyReached) {
+      telemetryTimerRef.current = 0;
+
+      const rightX = Math.cos(headingRef.current);
+      const rightZ = -Math.sin(headingRef.current);
+      const forwardDot = dxSite * fwdX + dzSite * fwdZ;
+      const rightDot = dxSite * rightX + dzSite * rightZ;
+      const targetBearingDeg = (Math.atan2(rightDot, forwardDot) * 180) / Math.PI;
+      const rawHeadingDeg = ((-headingRef.current * 180) / Math.PI) % 360;
+      const headingDeg = (rawHeadingDeg + 360) % 360;
+
+      onDriveUpdate({
+        speed: Math.abs(speed),
+        distanceToSite,
+        headingDeg,
+        targetBearingDeg,
+        reachedSite: reachedSiteRef.current,
+      });
+    }
   });
 
   return (
-    <group ref={roverRef} position={[0, 0, 0]}>
-      {/* Rotate the GLB model +90° around Y so its front (dish/camera) faces -Z (forward) */}
-      <group rotation={[0, Math.PI / 2, 0]}>
-        <primitive object={normalizedRover} />
+    <>
+      <group ref={roverGroupRef}>
+        <group rotation={[0, Math.PI / 2, 0]}>
+          <primitive object={preparedRover} />
+        </group>
       </group>
-    </group>
+      <LunarDust
+        roverPosRef={posRef}
+        roverHeadingRef={headingRef}
+        roverSpeedRef={speedRef}
+        sampler={sampler}
+      />
+    </>
   );
 }
 
 useGLTF.preload(roverUrl);
-
