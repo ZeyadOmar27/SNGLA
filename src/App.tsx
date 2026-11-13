@@ -1,10 +1,16 @@
-import { Suspense, useCallback, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { Environment, Lightformer } from '@react-three/drei';
 import { Level1Landing, type LandingTelemetry } from './components/Level1Landing';
 import { Level2Rover } from './components/Level2Rover';
-import { MissionHud, type ActiveLevel } from './components/MissionHud';
+import { MissionHud, type ActiveLevel, type ToastNotice } from './components/MissionHud';
 import type { DriveTelemetry } from './components/Rover';
+import {
+  FUNNY_FUMBLE_QUOTES,
+  LUNAR_ROCK_SPECS,
+  type LunarRockKind,
+} from './utils/lunarRocks';
+import { playCleanGrabSfx, playDustFumbleSfx } from './utils/lunarSfx';
 
 const INITIAL_LANDING_TELEMETRY: LandingTelemetry = {
   altitude: 32,
@@ -18,11 +24,16 @@ const INITIAL_LANDING_TELEMETRY: LandingTelemetry = {
 
 const INITIAL_DRIVE_TELEMETRY: DriveTelemetry = {
   speed: 0,
-  distanceToSite: 68,
+  distanceToSite: 24,
+  targetLabel: 'Solid Basalt (Bag #01)',
   headingDeg: 0,
   targetBearingDeg: 0,
   reachedSite: false,
+  nearbyRockId: null,
 };
+
+const CLEAN_ZONE_MIN = 0.3;
+const CLEAN_ZONE_MAX = 0.7;
 
 export function App() {
   const [activeLevel, setActiveLevel] = useState<ActiveLevel>('level1');
@@ -34,26 +45,140 @@ export function App() {
   );
   const [driveTelemetry, setDriveTelemetry] = useState<DriveTelemetry>(INITIAL_DRIVE_TELEMETRY);
 
-  const handleSelectLevel = useCallback((nextLevel: ActiveLevel) => {
-    setActiveLevel(nextLevel);
-    if (nextLevel === 'level1') {
-      setLandingTelemetry(INITIAL_LANDING_TELEMETRY);
-      setLevel1ResetNonce((n) => n + 1);
-    } else {
-      setDriveTelemetry(INITIAL_DRIVE_TELEMETRY);
-      setLevel2ResetNonce((n) => n + 1);
-    }
+  const [collectedIds, setCollectedIds] = useState<LunarRockKind[]>([]);
+  const [cleanGrabs, setCleanGrabs] = useState(0);
+  const [fumbles, setFumbles] = useState(0);
+  const [grabSwingNonce, setGrabSwingNonce] = useState(0);
+  const [fumbleEvent, setFumbleEvent] = useState<{ rockId: LunarRockKind; nonce: number } | null>(
+    null,
+  );
+  const [toast, setToast] = useState<ToastNotice | null>(null);
+
+  const tongsCursorRef = useRef<HTMLDivElement | null>(null);
+  const meterValueRef = useRef(0.5);
+  const collectedSet = useMemo(() => new Set(collectedIds), [collectedIds]);
+
+  const resetRockProgress = useCallback(() => {
+    setCollectedIds([]);
+    setCleanGrabs(0);
+    setFumbles(0);
+    setGrabSwingNonce(0);
+    setFumbleEvent(null);
+    setToast(null);
+    meterValueRef.current = 0.5;
   }, []);
+
+  const handleSelectLevel = useCallback(
+    (nextLevel: ActiveLevel) => {
+      setActiveLevel(nextLevel);
+      if (nextLevel === 'level1') {
+        setLandingTelemetry(INITIAL_LANDING_TELEMETRY);
+        setLevel1ResetNonce((n) => n + 1);
+      } else {
+        resetRockProgress();
+        setDriveTelemetry(INITIAL_DRIVE_TELEMETRY);
+        setLevel2ResetNonce((n) => n + 1);
+      }
+    },
+    [resetRockProgress],
+  );
 
   const handleResetCurrentLevel = useCallback(() => {
     if (activeLevel === 'level1') {
       setLandingTelemetry(INITIAL_LANDING_TELEMETRY);
       setLevel1ResetNonce((n) => n + 1);
     } else {
+      resetRockProgress();
       setDriveTelemetry(INITIAL_DRIVE_TELEMETRY);
       setLevel2ResetNonce((n) => n + 1);
     }
-  }, [activeLevel]);
+  }, [activeLevel, resetRockProgress]);
+
+  const handleAttemptGrab = useCallback(() => {
+    if (activeLevel !== 'level2') return;
+    const nearbyId = driveTelemetry.nearbyRockId;
+    if (!nearbyId || collectedSet.has(nearbyId)) return;
+
+    setGrabSwingNonce((n) => n + 1);
+    const meter = meterValueRef.current;
+    const isClean = meter >= CLEAN_ZONE_MIN && meter <= CLEAN_ZONE_MAX;
+    const spec = LUNAR_ROCK_SPECS.find((s) => s.id === nearbyId);
+    if (!spec) return;
+
+    if (isClean) {
+      playCleanGrabSfx(spec.id === 'genesis_rock');
+      setCollectedIds((prev) => (prev.includes(spec.id) ? prev : [...prev, spec.id]));
+      setCleanGrabs((c) => c + 1);
+      setToast({
+        id: Date.now(),
+        tone: 'success',
+        title: `${spec.bagLabel} Sealed — ${spec.shortName}!`,
+        body: spec.funnySuccessQuote,
+      });
+    } else {
+      playDustFumbleSfx();
+      setFumbles((f) => {
+        const nextF = f + 1;
+        setToast({
+          id: Date.now(),
+          tone: 'fumble',
+          title: `Dust Splash! (${spec.shortName} slipped!)`,
+          body: FUNNY_FUMBLE_QUOTES[(nextF - 1) % FUNNY_FUMBLE_QUOTES.length],
+        });
+        return nextF;
+      });
+      setFumbleEvent((prev) => ({ rockId: spec.id, nonce: (prev?.nonce ?? 0) + 1 }));
+    }
+  }, [activeLevel, driveTelemetry.nearbyRockId, collectedSet]);
+
+  // Animate bouncing tongs timing cursor smoothly ONLY while near an uncollected stone
+  useEffect(() => {
+    if (
+      activeLevel !== 'level2' ||
+      !driveTelemetry.nearbyRockId ||
+      collectedSet.has(driveTelemetry.nearbyRockId)
+    ) {
+      return;
+    }
+
+    let rafId = 0;
+    const startMs = performance.now();
+
+    const tick = (now: number) => {
+      const elapsedSec = (now - startMs) / 1000;
+      const cycle = (elapsedSec * 1.1) % 2;
+      const pos = cycle <= 1 ? cycle : 2 - cycle;
+      meterValueRef.current = pos;
+      if (tongsCursorRef.current) {
+        tongsCursorRef.current.style.left = `${(pos * 100).toFixed(1)}%`;
+      }
+      rafId = requestAnimationFrame(tick);
+    };
+
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }, [activeLevel, driveTelemetry.nearbyRockId, collectedSet]);
+
+  // Trigger grab on Spacebar while in Level 2 near a stone
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space' && !e.repeat && activeLevel === 'level2') {
+        if (driveTelemetry.nearbyRockId && !collectedSet.has(driveTelemetry.nearbyRockId)) {
+          e.preventDefault();
+          handleAttemptGrab();
+        }
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [activeLevel, driveTelemetry.nearbyRockId, collectedSet, handleAttemptGrab]);
+
+  // Auto-dismiss transient radio quip toasts cleanly after 3.8s
+  useEffect(() => {
+    if (!toast) return;
+    const timer = window.setTimeout(() => setToast(null), 3800);
+    return () => window.clearTimeout(timer);
+  }, [toast]);
 
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-slate-950">
@@ -116,7 +241,14 @@ export function App() {
           {activeLevel === 'level1' ? (
             <Level1Landing resetNonce={level1ResetNonce} onTelemetry={setLandingTelemetry} />
           ) : (
-            <Level2Rover resetNonce={level2ResetNonce} onDriveTelemetry={setDriveTelemetry} />
+            <Level2Rover
+              resetNonce={level2ResetNonce}
+              collectedSet={collectedSet}
+              nearbyRockId={driveTelemetry.nearbyRockId}
+              fumbleEvent={fumbleEvent}
+              grabSwingNonce={grabSwingNonce}
+              onDriveTelemetry={setDriveTelemetry}
+            />
           )}
         </Suspense>
       </Canvas>
@@ -125,6 +257,12 @@ export function App() {
         activeLevel={activeLevel}
         landingTelemetry={landingTelemetry}
         driveTelemetry={driveTelemetry}
+        collectedSet={collectedSet}
+        cleanGrabs={cleanGrabs}
+        fumbles={fumbles}
+        toast={toast}
+        tongsCursorRef={tongsCursorRef}
+        onAttemptGrab={handleAttemptGrab}
         onSelectLevel={handleSelectLevel}
         onResetCurrentLevel={handleResetCurrentLevel}
       />
